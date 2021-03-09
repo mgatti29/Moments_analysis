@@ -448,7 +448,7 @@ def make_covariance(mapp, num_real, scales, bins_dictionary):
             mask = np.in1d(mapp[0].conf['smoothing_scales'],np.array(scales)[mask_scales])
             lent = len(mapp[0].conf['smoothing_scales'][mask])
             err_dict_plot[key+'_'+binx] = cov_dict['err'][count:(count+lent)]
- 
+            count +=lent
     return cov_dict,vector,err_dict_plot
 
 

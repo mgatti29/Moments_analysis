@@ -553,3 +553,134 @@ def load_Nz(bins_theory,path_redshift):
     
 
     
+
+    
+    
+    
+    
+import scipy
+def compute_masked_2m(P_lz, smoothing_scales, lmax = 2048):
+    '''
+    It computes the smoothed (by a top-hat filter) 2nd moments of the density field given the
+    3D power spectrum at fixed z. (l=k/chi(z)).
+    '''
+    moments = []
+    ell = np.arange(lmax)
+    for i, sm in enumerate(smoothing_scales):
+        sm_rad =(sm/60.)*np.pi/180.  
+        # smoothing kernel (top-hat)
+  
+        A = 1./(2*np.pi*(1.-np.cos(sm_rad)))
+        B = np.sqrt(np.pi/(2.*ell+1.0))
+        
+        fact = -B*(scipy.special.eval_legendre(ell+1,np.cos(sm_rad))-scipy.special.eval_legendre(ell-1,np.cos(sm_rad)))*A
+        fact[0] = 1
+        moments.append((1.)*np.sum(fact[:lmax]**2*P_lz[:lmax]))
+    return np.array(moments)
+
+def compute_masked_3m(P_lz, smoothing_scales, P_lz_masked = None,lmax = 2048, 
+                      sm_formulae = 'SC', z = 0.5,cosmo = {'baryonic_effects':False,'omega_n_0':0.,'N_nu':0,'omega_M_0':0.3, 'omega_b_0': 0.004,'sigma_8' : 0.8, 'omega_lambda_0':1-0.3, 'omega_k_0':0.0, 'h':0.72, 'n' :0.92},
+                     expansion = False):
+    '''
+    It computes the smoothed (by a top-hat filter) 3rd moments of the density field given the
+    3D power spectrum at fixed z. (l=k/chi(z)). It implements small-scales fitting formulae
+    '''
+    
+    d = cd.comoving_distance(z, **cosmo)
+    ell = np.arange(lmax+1)
+
+    # this should be the NL powe spectrum given as inut ***
+    Pl = cosmolopy.perturbation.power_spectrum(ell/d,z, **cosmo) 
+    # NL scale:
+    l_nl = ell[(Pl*(ell/d)**3)/(2.*np.pi**2)>1][0]
+
+    ell = np.arange(lmax)
+    # PS index.
+    ns = np.diff((Pl))/Pl[:lmax]*ell
+    ns[ns != ns] = 1.
+    
+    #growth
+    Dp = cosmolopy.perturbation.fgrowth(z,cosmo['omega_M_0'])/(1.+z)
+    
+    # Initialise coefficients small-scales fitting formulae.
+    if sm_formulae == 'SC':
+        coeff = [0.25,3.5,2.,1.,2.,-0.2,1.,0.,0.]
+    elif sm_formulae == 'GM':
+        coeff = [0.484,3.740,-0.849,0.392,1.013,-0.575,0.128,-0.722,-0.926]
+    if (sm_formulae == 'NL'):
+        a = 1.;
+        b = 1.;
+        c = 1.;
+    else:
+        # transition l from linear to non linear
+        q= ell*1./l_nl
+
+        a = (1. + ((cosmo['sigma_8']*Dp)**coeff[5])*(0.7*(4.-2.**ns)/(1.+2.**(2.*ns+1)))**0.5*(q*coeff[0])**(ns+coeff[1]))/(1.+(q*coeff[0])**(ns+coeff[1]))
+        b = (1. + 0.2*coeff[2]*(ns+3)*(q*coeff[6])**(ns+coeff[7]+3))/(1.+(q*coeff[6])**(ns+coeff[7]+3.5));
+        c = (1. + 4.5*coeff[3]/(1.5+(ns+3)**4)*(q*coeff[4])**(ns+3+coeff[8]))/(1+(q*coeff[4])**(ns+3.5+coeff[8]));
+        a[0] =1
+        b[0] =1
+        c[0] =1
+
+    mu = 3./7.
+    moments = []
+    ell = np.arange(lmax)
+    for i, sm in enumerate(smoothing_scales):
+        sm_rad =(sm/60.)*np.pi/180.  
+    
+    
+        A = -1./(2*np.pi*(1.-np.cos(sm_rad)))
+        B = np.sqrt(np.pi/(2.*ell+1.0))
+        B1 = np.sqrt(np.pi*(2.*ell+1.0))
+        fact = B*(scipy.special.eval_legendre(ell+1,np.cos(sm_rad))-scipy.special.eval_legendre(ell-1,np.cos(sm_rad)))*A
+        d_fact =  -B1*A*np.sin(sm_rad)*scipy.special.eval_legendre(ell,np.cos(sm_rad))
+        d_fact += A*np.pi*2*np.sin(sm_rad)*fact
+    
+    
+        moment_2d = np.sum(fact[:lmax]**2*P_lz[:lmax])
+        moment_2d_a = np.sum(a*fact[:lmax]**2*P_lz[:lmax])
+        moment_2d_b = np.sum(b*fact[:lmax]**2*P_lz[:lmax])
+        moment_2d_c = np.sum(c*fact[:lmax]**2*P_lz[:lmax])
+    
+    
+        try:
+            moment_2d_masked = np.sum(fact[:lmax]**2*P_lz_masked[:lmax])
+    
+        except:
+            moment_2d_masked = np.sum(fact[:lmax]**2*P_lz[:lmax])
+    
+        dvL_dlnR = sm_rad*np.sum(b*fact*d_fact*P_lz[:lmax])
+        dlnvL_dlnR = dvL_dlnR/moment_2d_b
+    
+    
+        m3 = 6*moment_2d_masked**2 * (0.5*(2*mu*moment_2d_a**2+(1.-mu)*moment_2d_c**2)+moment_2d_b**2*0.25*dlnvL_dlnR)/(moment_2d**2)
+        if not expansion:
+            moments.append(m3)   
+        else:
+        
+            #'''
+            #https://arxiv.org/pdf/astro-ph/9903486.pdf
+            # There's one integral that in my paper which is actually approximated . /int dphi W const.. Here's the exact solution
+            #fact_sp = copy.copy(fact[:lmax])
+    
+            
+            moment2_2d_a_sp = 0.
+            moment2_2d_b_sp = 0.
+            moment2_2d_c_sp = 0.
+    
+             # first 2*3+1 bessel functions. (only the first two matters..)
+            for ii in range(0,3):
+                fact_sp = ((2.*ell+1)*scipy.special.jv(1,sm_rad*ell)*scipy.special.jv(2*ii+1,sm_rad*ell)/(sm_rad*ell)**2/(np.pi))
+                if ii == 0:
+                    fact_sp = copy.copy(fact**2)
+                else:
+                    fact_sp[0] = 0.
+                moment2_2d_a_sp += (2*ii+1)*np.sum(a*fact_sp[:lmax]*P_lz[:lmax])**2
+                moment2_2d_b_sp += (2*ii+1)*np.sum(b*fact_sp[:lmax]*P_lz[:lmax])**2
+                moment2_2d_c_sp += (2*ii+1)*np.sum(c*fact_sp[:lmax]*P_lz[:lmax])**2
+           
+            m3 = moment_2d_masked**2 * 3*(2*moment_2d_b**2-(1.-mu)*moment_2d_c**2+
+            2*mu*moment2_2d_a_sp-2*moment2_2d_b_sp+
+            2*(1.-mu)*moment2_2d_c_sp+moment_2d_b**2*0.5*dlnvL_dlnR)/(moment_2d**2)
+            moments.append(m3)     
+    return np.array(moments)

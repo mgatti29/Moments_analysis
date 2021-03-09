@@ -22,12 +22,16 @@ class moments_map(object):
         self.smoothed_maps = dict()
         self.fields = dict()
         self.moments = dict()
-        
-        if not os.path.exists(self.conf['output_folder']):
-            os.mkidr((self.conf['output_folder']))
-        if not os.path.exists((self.conf['output_folder'])+'/smoothed_maps/'):
-            os.mkdir((self.conf['output_folder'])+'/smoothed_maps/')
-            
+        try:
+            if not os.path.exists(self.conf['output_folder']):
+                os.mkdir((self.conf['output_folder']))
+        except:
+            pass
+        try:
+            if not os.path.exists((self.conf['output_folder'])+'/smoothed_maps/'):
+                os.mkdir((self.conf['output_folder'])+'/smoothed_maps/')
+        except:
+            pass
     def add_map(self, map_, field_label ='', tomo_bin = 0):
         '''
         Add a map_ to the class 'fields' entry. need to specify
@@ -66,7 +70,7 @@ class moments_map(object):
             
             alms_container = []
             
-            
+            ell, emm = hp.Alm.getlm(lmax=lmax)
             if not skip_conversion_toalm:
                 # check if we're transforming a shear field or density field. 
                 if field_label2 != None:
@@ -74,7 +78,7 @@ class moments_map(object):
                 else:
                     KQU_masked_maps = self.fields[field_label1][binx]
                     
-                ell, emm = hp.Alm.getlm(lmax=lmax)
+                
                 if (shear) and (len(KQU_masked_maps) == 3):
                     alms = hp.map2alm(KQU_masked_maps, lmax=lmax, pol=True)  # Spin transform!
                     

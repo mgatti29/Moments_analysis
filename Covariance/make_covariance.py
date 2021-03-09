@@ -21,7 +21,7 @@ only auto-moments for <dd> ans <ddd>.
 import copy
 import os
 import pickle
-from Moments_analysis import moments_map, ∑
+from Moments_analysis import moments_map, make_covariance
 
 def save_obj(name, obj):
     with open(name + '.pkl', 'wb') as f:
@@ -37,7 +37,7 @@ mapp = []
 bins_lenses = [0, 1, 2, 3]
 bins_WL = [0, 1, 2, 3]
 # dict_keys(['kEkE', 'kBkB', 'kEkN', 'kNkN', 'kNkE', 'dKK', 'Kdd', 'dkNkN', 'nKK', 'nkNkN', 'kNdd', 'knn', 'kNnn', 'dd', 'nn', 'dnn', 'ndd'])
- 
+
 for i in range(N_rel):
     try:
         mute = load_obj(output_FLASK+'moments_seed_'+str(i+1))
@@ -51,7 +51,12 @@ for i in range(N_rel):
             for key in mapp_ave.moments.keys():
                 for key2 in mapp_ave.moments[key].keys():
                     mapp_ave.moments[key][key2] += mute.moments[key][key2]/N_rel
-         
+        
+        #for key in mapp[i].moments.keys():
+        #    for key2 in mapp[i].moments[key].keys():
+        #        del mapp[i].moments[key][key2]
+        #        mapp[i].moments[key][key2] = copy.deepcopy(mute.moments[key][key2])
+                
 
 
         for b1 in bins_WL:
@@ -70,6 +75,15 @@ for i in range(N_rel):
 
 
         for b1 in bins_lenses:
+            for b2 in bins_lenses:
+                for b3 in bins_lenses:
+                    try:
+                        binx = '{0}_{1}_{2}'.format(b1, b2, b3)
+                        mapp[i].moments['ddd'][binx] -= (mapp[i-1].moments['nnn'][binx]+3*mapp[i-1].moments['ndd'][binx]+3*mapp[i-1].moments['dnn'][binx])
+                    except:
+                        pass
+                    
+        for b1 in bins_lenses:
             for b2 in bins_WL:
                 for b3 in bins_WL:
                     try:
@@ -77,15 +91,24 @@ for i in range(N_rel):
                         mapp[i].moments['dKK'][binx] -= (mapp[i-1].moments['nkNkN'][binx]+3*mapp[i-1].moments['nKK'][binx]+3*mapp[i-1].moments['dkNkN'][binx])
                     except:
                         pass
+                    
         for b1 in bins_WL:
             for b2 in bins_lenses:
                 for b3 in bins_lenses:
                     try:
                         binx = '{0}_{1}_{2}'.format(b1, b2, b3)
                         mapp[i].moments['Kdd'][binx] -= (mapp[i-1].moments['kNnn'][binx]+3*mapp[i-1].moments['kNdd'][binx]+3*mapp[i-1].moments['knn'][binx])
+                    except:   
+                        pass
+                    
+        for b1 in bins_WL:
+            for b2 in bins_WL:
+                for b3 in bins_WL:
+                    try:
+                        binx = '{0}_{1}_{2}'.format(b1, b2, b3)
+                        mapp[i].moments['kEkE'][binx] = copy.deepcopy(mapp[i].moments['kEkE'][binx]- 3*mapp[i-1].moments['kEkN'][binx])
                     except:
                         pass
-
     except:
         print ('failed ',i)
         mapp.append(mapp[i-1])
@@ -93,4 +116,6 @@ for i in range(N_rel):
             for key2 in mapp_ave.moments[key].keys():
                 mapp_ave.moments[key][key2] += mapp[i-1].moments[key][key2]/N_rel
 save_obj('/global/project/projectdirs/des/mgatti/Moments_analysis/Cov_FLASK_Y3',mapp)
+save_obj('/global/project/projectdirs/des/mgatti/Moments_analysis/Ave_FLASK_Y3',mapp_ave)
+
 print ('done')
