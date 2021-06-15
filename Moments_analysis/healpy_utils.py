@@ -70,3 +70,26 @@ def addSourceEllipticity(self,es,es_colnames=("e1","e2"),rs_correction=True,inpl
 			self["shear2"] = e.imag
 		else:
 			return (e.real,e.imag)
+
+        
+def gk_inv(K,KB,nside,lmax):
+
+    alms = hp.map2alm(K, lmax=lmax, pol=False)  # Spin transform!
+
+    ell, emm = hp.Alm.getlm(lmax=lmax)
+
+    kalmsE = alms/( 1. * ((ell * (ell + 1.)) / ((ell + 2.) * (ell - 1))) ** 0.5)
+   
+    kalmsE[ell == 0] = 0.0
+
+    
+    alms = hp.map2alm(KB, lmax=lmax, pol=False)  # Spin transform!
+
+    ell, emm = hp.Alm.getlm(lmax=lmax)
+
+    kalmsB = alms/( 1. * ((ell * (ell + 1.)) / ((ell + 2.) * (ell - 1))) ** 0.5)
+   
+    kalmsB[ell == 0] = 0.0
+
+    _,e1t,e2t = hp.alm2map([kalmsE,kalmsE,kalmsB] , nside=nside, lmax=lmax, pol=True)
+    return e1t,e2t# ,r
