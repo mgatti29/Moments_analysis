@@ -18,7 +18,7 @@ export VALUESINCLUDE=Y3_params_priors/values_SR_hyp.ini
 export PRIORSINCLUDE=Y3_params_priors/priors.ini
 
 # the following lines you need to change them such that it loads your environment & cosmosis and then move to the mcmc_cosmosis folder. Note that you also need to change the following path to your installation of Moments_analysis.
-export moments_like_path=/global/u2/m/mgatti/Moments_analysis/mcmc_cosmosis/moment_likelihood.py
+export moments_like_path=/global/homes/m/mcraveri/Moments_analysis/mcmc_cosmosis/moment_likelihood.py
 
 cd //global/homes/m/mcraveri/
 source cosmosis/config/setup-cosmosis-nersc 3
