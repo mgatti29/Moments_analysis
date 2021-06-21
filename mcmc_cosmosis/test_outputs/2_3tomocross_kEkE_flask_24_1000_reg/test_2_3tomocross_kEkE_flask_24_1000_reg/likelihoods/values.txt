@@ -1,2 +1,0 @@
-moments_like = -27.40540102341325
-smallratio_like = 18.42104450565242
