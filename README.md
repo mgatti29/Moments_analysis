@@ -16,3 +16,16 @@ The other packages you might need to install are:
 - pandas
 - george
 - xarray
+
+
+# cosmosis setup to run chains.
+
+The current chains can only run at nersc - there's a pre-compiled script in the code folder that'll work only on nersc (unless you compile it, but that's not stable enough yet).
+
+In your cosmosis folders, please do:
+- cosmosis:
+git checkout develop
+- cosmosis-standard-library:
+git checkout des-y3
+- cosmosis-des-library:
+git checkout develop
