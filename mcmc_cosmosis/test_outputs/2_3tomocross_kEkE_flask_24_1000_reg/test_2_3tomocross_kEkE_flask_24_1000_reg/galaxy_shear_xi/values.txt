@@ -1,0 +1,9 @@
+bin_avg = True
+cl_section = 'galaxy_shear_cl'
+is_auto = False
+nbin_a = 6
+nbin_b = 4
+sample_a = 'lens'
+sample_b = 'source'
+save_name = ''
+sep_name = 'theta'
