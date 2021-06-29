@@ -8,8 +8,8 @@
 #SBATCH --constraint=haswell
 #SBATCH --time=48:00:00
 
-export RUNNAME='2_3tomocross_kEkE_flask_24_1000_reg_hyp'
-export KEY_moments='2_3tomocross_kEkE_flask_24_1000_reg'
+export RUNNAME='2_3tomocross_kEkE_flask_28_1000_reg_hyp'
+export KEY_moments='2_3tomocross_kEkE_flask_28_1000_reg'
 export DATAFILE=/project/projectdirs/des/www/y3_chains/data_vectors/2pt_NG_final_2ptunblind_02_26_21_wnz_maglim_covupdate_6000HR.fits
 export DATAFILE_SR=data/2pt_NG_final_2ptunblind_02_26_21_wnz_maglim_covupdate_sr.npy
 export SCALEFILE=Y3_params_priors/scales.ini
