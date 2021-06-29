@@ -8,8 +8,8 @@
 #SBATCH --constraint=haswell
 #SBATCH --time=48:00:00
 
-export RUNNAME='2_3tomocross_kEkE_PKD_24_600_reg_200'
-export KEY_moments='2_3tomocross_kEkE_PKD_24_600_reg_200'
+export RUNNAME='2_3tomocross_kEkE_PKD_28_600_reg_200'
+export KEY_moments='2_3tomocross_kEkE_PKD_28_600_reg_200'
 export DATAFILE=data/2pt_NG_final_2ptunblind_02_26_21_wnz_maglim_covupdate.fits
 export DATAFILE_SR=data/2pt_NG_final_2ptunblind_02_26_21_wnz_maglim_covupdate_sr.npy
 export SCALEFILE=Y3_params_priors/scales.ini
