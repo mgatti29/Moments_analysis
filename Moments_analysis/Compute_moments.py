@@ -17,6 +17,12 @@ class moments_map(object):
     def __init__(self,conf = {'output_folder': './'}):
         '''
         Initialise the moments_map object.
+        This object contains: 
+        1) configurations
+        2) fileds -> it's a dictionary with the input maps
+        3) smoothed_maps: those are the smoothed version of the input maps. So far we have implemented top-hat smoothing.
+        4) moments: 2nd and 3rd moments of the smoothed maps.
+        
         '''
         self.conf = conf
         self.smoothed_maps = dict()
