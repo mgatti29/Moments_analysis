@@ -93,3 +93,39 @@ def gk_inv(K,KB,nside,lmax):
 
     _,e1t,e2t = hp.alm2map([kalmsE,kalmsE,kalmsB] , nside=nside, lmax=lmax, pol=True)
     return e1t,e2t# ,r
+
+
+def g2k_sphere(gamma1, gamma2, mask, nside=1024, lmax=2048,nosh=True):
+    """
+    Convert shear to convergence on a sphere. In put are all healpix maps.
+    """
+
+    gamma1_mask = gamma1 * mask
+    gamma2_mask = gamma2 * mask
+
+    KQU_masked_maps = [gamma1_mask, gamma1_mask, gamma2_mask]
+    alms = hp.map2alm(KQU_masked_maps, lmax=lmax, pol=True)  # Spin transform!
+
+
+    ell, emm = hp.Alm.getlm(lmax=lmax)
+    if nosh:
+        almsE = alms[1] * 1. * ((ell * (ell + 1.)) / ((ell + 2.) * (ell - 1))) ** 0.5
+        almsB = alms[2] * 1. * ((ell * (ell + 1.)) / ((ell + 2.) * (ell - 1))) ** 0.5
+    else:
+        almsE = alms[1] * 1.
+        almsB = alms[2] * 1. 
+    almsE[ell == 0] = 0.0
+    almsB[ell == 0] = 0.0
+    almsE[ell == 1] = 0.0
+    almsB[ell == 1] = 0.0
+
+
+
+    almssm = [alms[0], almsE, almsB]
+
+
+    kappa_map_alm = hp.alm2map(almssm[0], nside=nside, lmax=lmax, pol=False)
+    E_map = hp.alm2map(almssm[1], nside=nside, lmax=lmax, pol=False)
+    B_map = hp.alm2map(almssm[2], nside=nside, lmax=lmax, pol=False)
+
+    return E_map, B_map, almsE
