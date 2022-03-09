@@ -386,7 +386,7 @@ def make_maps(seed):
 
     print (seed,rel)
     
-    shell_directory = path_sims+'/cosmo_Om={1:2.2f}_num={0}_s8={2:2.2f}'.format(rel,Omegam,s8)
+    shell_directory = path_sims+'/cosmo_Om={1:2.2f}_num={0}_s8={2:2.2f}/'.format(rel,Omegam,s8)
     
     
     maps_base = dict()
@@ -401,8 +401,9 @@ def make_maps(seed):
         lensing_weights = UFalcon.lensing_weights.Continuous(
                 path_nz, z_lim_low=0., z_lim_up=2., shift_nz=0., IA=0.)
         
-        
+    
         shell_files = glob.glob("{}DES-Y3-shell*".format(shell_directory))
+      
         z_bounds, _ = path_tools.get_parameters_from_path(shell_files)
         for zz in frogress.bar(range(len(z_bounds['z-low']))):
             shell = hp.read_map(shell_files[zz])
@@ -559,10 +560,10 @@ if __name__ == '__main__':
     while run_count<len(runstodo):
         comm = MPI.COMM_WORLD
         print("Hello! I'm rank %d from %d running in total..." % (comm.rank, comm.size))
-        try:
-            make_maps(runstodo[run_count+comm.rank])
-        except:
-            pass
+        #try:
+        make_maps(runstodo[run_count+comm.rank])
+    #    except:
+     #       pass
         run_count+=comm.size
         comm.bcast(run_count,root = 0)
         comm.Barrier() 
