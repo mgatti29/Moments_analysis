@@ -67,7 +67,7 @@ output = '/global/cscratch1/sd/mgatti/Mass_Mapping/moments/PKDGRAV_tests/'
 
 
 # path to sims
-path_sims = '/global/cscratch1/sd/dominikz/DES_Y3_PKDGRAV_SIMS/fidu_run_1/
+path_sims = '/global/cscratch1/sd/dominikz/DES_Y3_PKDGRAV_SIMS/fidu_run_1/'
 
 
 ############## COSMOLOGICAL PARAMETERS ################################################################
@@ -79,7 +79,6 @@ s8=0.84
 h = 0.673 #don't change this
 
 
-mask_DES_y3 = load_obj('/project/projectdirs/des/mass_maps/Maps_final//mask_DES_y3')
 
 
 
@@ -358,8 +357,10 @@ def make_maps(seed):
     random_maps = dict()
     sources_maps = dict()
     sources_cat = dict()
-    # load the mcal catalog already divided into bins.
- 
+    
+    
+    mask_DES_y3 = load_obj('/project/projectdirs/des/mass_maps/Maps_final//mask_DES_y3')
+
 
     
     # defines cosmology for PKDGRAV sims
