@@ -386,7 +386,7 @@ def make_maps(seed):
 
     print (seed,rel)
     
-    shell_directory = path_sims+'/cosmo_Om={1:2.2f}_num={0}_s8={2:2.f}'.format(rel,Omegam,s8)
+    shell_directory = path_sims+'/cosmo_Om={1:2.2f}_num={0}_s8={2:2.2f}'.format(rel,Omegam,s8)
     
     
     maps_base = dict()
