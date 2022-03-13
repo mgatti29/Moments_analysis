@@ -209,8 +209,11 @@ def runit(seed, chunk):
 
 if __name__ == '__main__':
      
-    if not os.path.exists(output_folder+'/counts/'):
-        os.mkdir(output_folder+'/counts/')              
+    try:
+        if not os.path.exists(output_folder+'/counts/'):
+            os.mkdir(output_folder+'/counts/')     
+    except:
+        pass            
     runstodo = []
     chunks_to_do =[]
                                   
