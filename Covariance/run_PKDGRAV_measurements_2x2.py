@@ -37,7 +37,7 @@ srun --nodes=5 --tasks-per-node=3 --cpus-per-task=20 --cpu-bind=cores --mem=110G
 
 
 # this must be the same label you used in the convert_PKDGRAV_2maps
-extralab_ ='_fid'
+extralab_ ='__fid'
 
 
 rewrite = False
@@ -136,7 +136,7 @@ def runit(seed, chunk):
         if (not os.path.exists(path_check) or rewrite):
             # second run for shape noise *********************
             # load FLASK maps *******************************
-            catalog = load_obj(output+'seed'+extralab_+'_'+str(seed+1))
+            catalog = load_obj(output_folder+'seed'+extralab_+'_'+str(seed+1))
     
             mcal_moments = moments_map(conf)
             
@@ -162,37 +162,18 @@ def runit(seed, chunk):
         print ('computing moments')
         mcal_moments = moments_map(conf)
         
-
-        
-
-        if fields_to_compute['original_k_full']:
-            mcal_moments.transform_and_smooth('convergence_field_full','g1_field_full','g2_field_full', shear = True, tomo_bins = tomo_bins, overwrite = False , skip_conversion_toalm = True)      
-        if fields_to_compute['original_k']:
-            mcal_moments.transform_and_smooth('convergence_field','g1_field','g2_field', shear = True, tomo_bins = tomo_bins, overwrite = False , skip_conversion_toalm = True)   
-
-        if fields_to_compute['density_d']:
-            mcal_moments.transform_and_smooth('density_full','density_full', shear = False, tomo_bins = tomo_bins_lens, overwrite = False, skip_conversion_toalm = True)   
-            mcal_moments.transform_and_smooth('density','density', shear = False, tomo_bins = tomo_bins_lens, overwrite = False, skip_conversion_toalm = True)   
-            
         if fields_to_compute['noiseless_k']:
             mcal_moments.transform_and_smooth('convergence_noiseless','g1','g2', shear = True, tomo_bins = tomo_bins, overwrite = False , skip_conversion_toalm = True)    
         if fields_to_compute['noisy_k']:
             mcal_moments.transform_and_smooth('convergence','e1','e2', shear = True, tomo_bins = tomo_bins, overwrite = False , skip_conversion_toalm = True)      
         if fields_to_compute['noisy_k']:
             mcal_moments.transform_and_smooth('noise','e1r','e2r', shear = True, tomo_bins = tomo_bins, overwrite = False , skip_conversion_toalm = True) 
-        if fields_to_compute['galaxy_d']:
-            mcal_moments.transform_and_smooth('galaxies','g', shear = False, tomo_bins = tomo_bins_lens, overwrite = False , skip_conversion_toalm = True)    
-            mcal_moments.transform_and_smooth('randoms','r', shear = False, tomo_bins = tomo_bins_lens, overwrite = False , skip_conversion_toalm = True)                 
-    
+
             
         del mcal_moments.fields 
         gc.collect()
         
         # We don't de-noise here - we do it at posteriori when assemplying the covariance.
-        if fields_to_compute['original_k_full']:
-            mcal_moments.compute_moments( label_moments='field_full_kEkE', field_label1 ='convergence_field_full_kE',  tomo_bins1 = tomo_bins)
-        if fields_to_compute['original_k']:
-            mcal_moments.compute_moments( label_moments='field_kEkE', field_label1 ='convergence_field_kE',  tomo_bins1 = tomo_bins)
         if fields_to_compute['noiseless_k']:
             mcal_moments.compute_moments( label_moments='noiseless_kEkE', field_label1 ='convergence_noiseless_kE',  tomo_bins1 = tomo_bins)
             mcal_moments.compute_moments( label_moments='noiseless_kBkB', field_label1 ='convergence_noiseless_kB',  tomo_bins1 = tomo_bins)
@@ -208,12 +189,11 @@ def runit(seed, chunk):
         save_obj(output_folder+'moments_seed'+extralab_+'_'+str(seed+1),mcal_moments)
 
 if __name__ == '__main__':
-     
     try:
         if not os.path.exists(output_folder+'/counts/'):
             os.mkdir(output_folder+'/counts/')     
     except:
-        pass            
+        pass
     runstodo = []
     chunks_to_do =[]
                                   
@@ -244,7 +224,8 @@ if __name__ == '__main__':
     print (runstodo)
     while run_count<len(runstodo):
         comm = MPI.COMM_WORLD
-        print("Hello! I'm rank %d from %d running in total..." % (comm.rank, comm.size))
+        #print("Hello! I'm rank %d from %d running in total..." % (comm.rank, comm.size))
+        #if 1==1:
         try:
             runit(runstodo[run_count+comm.rank],chunks_to_do[run_count+comm.rank])
         except:
