@@ -31,7 +31,7 @@ The first part can be run setting 'compute_moments = False' and:
 srun --nodes=1 --tasks-per-node=12 --cpus-per-task=5 --cpu-bind=cores --mem=110GB python run_PKDGRAV_measurements_2x2.py
 
 As for the second, once the first part has completed all the runs, you need to set 'compute_moments = True' and run:
-srun --nodes=5 --tasks-per-node=3 --cpus-per-task=20 --cpu-bind=cores --mem=110GB python run_PKDGRAV_measurements_2x2.py
+srun --nodes=1 --tasks-per-node=3 --cpus-per-task=20 --cpu-bind=cores --mem=110GB python run_PKDGRAV_measurements_2x2.py
 
 '''
 
@@ -41,7 +41,7 @@ extralab_ ='__fid'
 
 
 rewrite = False
-compute_moments = False
+compute_moments = True
 
 output_folder = '/global/cscratch1/sd/mgatti/Mass_Mapping/moments/PKDGRAV_tests/'
 
@@ -185,7 +185,11 @@ def runit(seed, chunk):
             mcal_moments.compute_moments( label_moments='kNBkNB', field_label1 ='noise_kB', field_label2 = 'noise_kB', tomo_bins1 = tomo_bins)
             mcal_moments.compute_moments( label_moments='kNkE', field_label2 ='convergence_kE', field_label1 = 'noise_kE',  tomo_bins1 = tomo_bins)
             
-
+        try:
+            del mcal_moments.smoothed_maps
+            gc.collect()
+        except:
+            pass
         save_obj(output_folder+'moments_seed'+extralab_+'_'+str(seed+1),mcal_moments)
 
 if __name__ == '__main__':
