@@ -204,7 +204,7 @@ if __name__ == '__main__':
       
     # it checks what to run:
     for i in range(0,n_real):
-        if not os.path.exists(output_folder+'moments_seedu'+extralab_+'_'+str(i+1)+'.pkl'):
+        if not os.path.exists(output_folder+'moments_seed'+extralab_+'_'+str(i+1)+'.pkl'):
             for key in fields_to_compute.keys():
                 if fields_to_compute[key]:        
                     if not compute_moments:
