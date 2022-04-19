@@ -12,7 +12,8 @@ import scipy
 import scipy.special  
 from .smoothing_utils import almxfl
 from astropy.table import Table
-
+import pys2let
+from pys2let import *
 class moments_map(object):
     def __init__(self,conf = {'output_folder': './'}):
         '''
@@ -155,6 +156,104 @@ class moments_map(object):
                     if not skip_loading_smoothed_maps:
                         self.smoothed_maps[output_label+'_'+ll[ix]][binx][sm] = copy.deepcopy(mapaa)
                         del mapaa
+            del alms_container
+            gc.collect()
+
+    def transform_and_smooth_sp(self, output_label = '', field_label1 = '', field_label2 = None, shear = True, tomo_bins = [0], overwrite = False, skip_loading_smoothed_maps = False, skip_conversion_toalm = False):
+        '''
+        It takes 1 (2) field(s), compute the harmonic coefficients, multiply a top hat function, a gives back the smoothed map. If shear = True, it assumes the field1,field2 = e1,e2 and makes the conversion to k_E and k_B. The smoothed maps are also saved.
+        n.b.: the two following keywordare normally set to False except when computing the covariance. it helps
+        saving memory.
+        skip_loading_smoothed_maps -> if the smoothed map already exists, it doesn't load it.
+        skip_conversion_toalm  -> this can be set True if all the smoothed maps already exist. it skips the the conversion to alm from the field maps.
+        '''
+        
+        lmax = self.conf['lmax']
+        nside = self.conf['nside']
+        ll = ['kE','kB']
+        for ix in range(2):
+            # it initialises the smoothed_maps dictionaries
+            self.smoothed_maps[output_label+'_'+ll[ix]] = dict()
+                
+        # loop over bins.
+        for binx in tomo_bins:
+            for ix in range(2):
+                self.smoothed_maps[output_label+'_'+ll[ix]][binx] = dict()
+                
+            if self.conf['verbose']:
+                print(output_label,binx)
+            
+            alms_container = []
+            
+            ell, emm = hp.Alm.getlm(lmax=lmax-1)
+            if not skip_conversion_toalm:
+                # check if we're transforming a shear field or density field. 
+                if field_label2 != None:
+                    KQU_masked_maps = [self.fields[field_label1][binx],self.fields[field_label1][binx],self.fields[field_label2][binx]]
+                else:
+                    KQU_masked_maps = self.fields[field_label1][binx]
+                    
+                
+                if (shear) and (len(KQU_masked_maps) == 3):
+                    alms = hp.map2alm(KQU_masked_maps, lmax=lmax-1, pol=True)  # Spin transform!
+                    
+                    # E modes
+                    alms_container.append(alms[1] * 1. * ((ell * (ell + 1.)) / ((ell + 2.) * (ell - 1))) ** 0.5)
+                    # B modes
+                    alms_container.append(alms[2] * 1. * ((ell * (ell + 1.)) / ((ell + 2.) * (ell - 1))) ** 0.5)
+                    alms_container[0][ell == 0] = 0.0
+                    alms_container[1][ell == 0] = 0.0
+                    alms_container[0][ell == 1] = 0.0
+                    alms_container[1][ell == 1] = 0.0
+                    del alms
+        
+                else:
+                    alms_container.append(hp.map2alm(KQU_masked_maps, lmax=lmax, pol=False))
+                
+                del KQU_masked_maps
+                
+                gc.collect()
+            else:
+                if field_label2 != None:
+                    alms_container = [None, None]
+                else:
+                    alms_container = [None]
+                
+                
+                
+            
+         
+            for ix, almx in enumerate(alms_container):
+                    J_min = self.conf['J_min']
+                    B = self.conf['B']
+                    J = pys2let_j_max(2, lmax, J_min)
+
+
+                    # Read healpix map and compute alms. Thi ssuppresses all the power above L.
+                    # it is usually not needed - when computing hte convergence field from the shear field, the map is already band limited.
+                    f_wav_lm, f_scal_lm = analysis_axisym_lm_wav(almx, 2, lmax, J_min)
+                    
+                    for sm in range(J - J_min + 1):
+                        flm = f_wav_lm[:, sm].ravel()              
+                        path = self.conf['output_folder']+'/smoothed_maps/'+output_label+'_'+ll[ix]+'_bin_'+str(binx)+'_sm_'+str(sm)+'.fits'
+                        if (not os.path.exists(path)) or (overwrite):
+                            mapaa = hp.alm2map(flm, nside=nside, lmax=lmax - 1)
+                            # save the map 
+                            if os.path.exists(path):
+                                os.remove(path)
+                            fits_f = Table()
+                            fits_f['map'] = np.array(mapaa) #CHANGED!!#[mute_mask])
+                            fits_f.write(path)
+                        else:
+                            if not skip_loading_smoothed_maps:
+                                # load the map
+                                mute = pf.open(path,memmap=False)
+                                mapaa = copy.copy(mute[1].data['map'])
+                            else:
+                                mapaa = None
+                        if not skip_loading_smoothed_maps:
+                            self.smoothed_maps[output_label+'_'+ll[ix]][binx][sm] = copy.deepcopy(mapaa)
+                            del mapaa
             del alms_container
             gc.collect()
 
