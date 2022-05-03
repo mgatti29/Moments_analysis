@@ -100,7 +100,9 @@ class moments_map(object):
                     del alms
         
                 else:
-                    alms_container.append(hp.map2alm(KQU_masked_maps, lmax=lmax, pol=False))
+                    alms_ = hp.map2alm(KQU_masked_maps, lmax=lmax-1, pol=False)
+                    alms_container.append(alms_)
+                    alms_container.append(0*alms_)
                 
                 del KQU_masked_maps
                 
