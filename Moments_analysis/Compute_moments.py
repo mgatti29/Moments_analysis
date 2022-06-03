@@ -12,8 +12,16 @@ import scipy
 import scipy.special  
 from .smoothing_utils import almxfl
 from astropy.table import Table
-import pys2let
-from pys2let import *   
+try:
+    import pys2let
+    from pys2let import *   
+except:
+    print ('missing pys2let')
+try:
+    import pywph as pw
+except:
+    print ('missing pywph')
+    
 import math
 import frogress
 
@@ -411,3 +419,96 @@ class moments_map(object):
                             good_dec.append(dec_)
 
                 self.fields_patches[key][key2] = patches
+                
+                
+    def compute_moments_pywhm(self,label,field1,field2,denoise1,denoise2):
+        M = self.fields_patches[field1][list(self.fields_patches[field1].keys())[0]][0].shape[0]
+        N = self.fields_patches[field1][list(self.fields_patches[field1].keys())[0]][0].shape[1]
+        tomo_bins = list(self.fields_patches[field1].keys())
+
+        J = self.conf['J']
+        j_min = self.conf['j_min']
+        L =  self.conf['L']
+        dn = 0
+
+        self.moments_pywph[label] = dict()
+        self.moments_pywph_indexes[label] = dict()
+
+        for i in tomo_bins:
+            for j in tomo_bins:
+
+                for k in range(len(self.fields_patches[field1][list(self.fields_patches[field1].keys())[0]])):
+
+                    patch1 = self.fields_patches[field1][i][k]
+                    patch2 = self.fields_patches[field2][i][k]
+                    npatch1 = self.fields_patches[denoise1][i][k]
+                    npatch2 = self.fields_patches[denoise2][i][k]    
+
+
+                    if i==j:
+                        wph_op = pw.WPHOp(M, N, J, L=L,j_min=j_min, dn=dn, device='cpu')
+                        wph = wph_op(patch1, cross=False, ret_wph_obj=True)
+                        wph.to_isopar()
+                        s00, s00_indices = wph.get_coeffs("S00")
+                        s11, s11_indices = wph.get_coeffs("S11")
+                        s01, s01_indices = wph.get_coeffs("S01")
+                        c01, c01_indices = wph.get_coeffs("C01")
+                        cphase, cphase_indices = wph.get_coeffs("Cphase")
+                        c00, c00_indices = wph.get_coeffs("C00")
+
+                        wph = wph_op(npatch1, cross=False, ret_wph_obj=True)
+                        wph.to_isopar()
+                        ns00, s00_indices = wph.get_coeffs("S00")
+                        ns11, s11_indices = wph.get_coeffs("S11")
+                        ns01, s01_indices = wph.get_coeffs("S01")
+                        nc01, c01_indices = wph.get_coeffs("C01")
+                        ncphase, cphase_indices = wph.get_coeffs("Cphase")
+                        nc00, c00_indices = wph.get_coeffs("C00")
+
+                    else:
+
+                        wph_op = pw.WPHOp(M, N, J, L=L,j_min=j_min, dn=dn, device='cpu')
+                        wph = wph_op([patch1, patch2], cross=True, ret_wph_obj=True)
+                        wph.to_isopar()
+                        s00, s00_indices = wph.get_coeffs("S00")
+                        s11, s11_indices = wph.get_coeffs("S11")
+                        s01, s01_indices = wph.get_coeffs("S01")
+                        c01, c01_indices = wph.get_coeffs("C01")
+                        cphase, cphase_indices = wph.get_coeffs("Cphase")
+                        c00, c00_indices = wph.get_coeffs("C00")
+
+                        wph = wph_op([npatch1, npatch2], cross=True, ret_wph_obj=True)
+                        wph.to_isopar()
+                        ns00, s00_indices = wph.get_coeffs("S00")
+                        ns11, s11_indices = wph.get_coeffs("S11")
+                        ns01, s01_indices = wph.get_coeffs("S01")
+                        nc01, c01_indices = wph.get_coeffs("C01")
+                        ncphase, cphase_indices = wph.get_coeffs("Cphase")
+                        nc00, c00_indices = wph.get_coeffs("C00")
+
+
+                    s00 = np.array(s00)-np.array(ns00)
+                    s11 = np.array(s11)- np.array(ns11)
+                    s01 = np.array(s01)-np.array(ns01)
+                    c01 = np.array(c01)- np.array(nc01)
+                    cphase = np.array(cphase)-np.array(ncphase)
+                    dv = np.hstack([s00,s11,s01,c01,cphase])
+
+
+                    #print (s00_indices,s11_indices,s01_indices,c01_indices,cphase_indices)
+                    #j l p j l p
+                    s00_indices =    np.array(['S00_'+'j'+str(s00_indices[ii][0])+'j'+str(s00_indices[ii][3]) for ii in range(len(s00_indices))])
+                    s11_indices =    np.array(['S11_'+'j'+str(s11_indices[ii][0])+'j'+str(s11_indices[ii][3]) for ii in range(len(s11_indices))])
+                    s01_indices =    np.array(['S01_'+'j'+str(s01_indices[ii][0])+'j'+str(s01_indices[ii][3]) for ii in range(len(s01_indices))])
+                    c01_indices =    np.array(['C01_'+'j'+str(c01_indices[ii][0])+'j'+str(c01_indices[ii][3])+'dl'+str(c01_indices[ii][4]) for ii in range(len(c01_indices))])
+                    cphase_indices = np.array(['Cphase_'+str(cphase_indices[ii][0])+str(cphase_indices[ii][3]) for ii in range(len(cphase_indices))])
+    #
+
+                    dv_indexes = np.hstack([s00_indices,s11_indices,s01_indices,c01_indices,cphase_indices])
+                    if k == 0:
+                        self.moments_pywph[label]['{0}_{1}'.format(i,j)] = dv
+                        self.moments_pywph_indexes[label]['{0}_{1}'.format(i,j)] = dv_indexes
+                    else:
+                        self.moments_pywph[label]['{0}_{1}'.format(i,j)] += dv
+             
+          
