@@ -369,45 +369,45 @@ class moments_map(object):
         self.moments.update({label_moments: moments_mute})
         
         
-def cut_patches(self, delta=9.):
-    '''
-    It takes every entry in the field catalog, and cuts them into squared patches using the healpy gnomview projection.
-    delta is the side length of the square patch in degrees.
-    patches are saved into the 'field_patches' dictionary.
-    
-    '''
-    self.fields_patches = dict()
+    def cut_patches(self, delta=9.):
+        '''
+        It takes every entry in the field catalog, and cuts them into squared patches using the healpy gnomview projection.
+        delta is the side length of the square patch in degrees.
+        patches are saved into the 'field_patches' dictionary.
 
-    for key in self.fields.keys():
-        self.fields_patches[key] = dict()
-        for key2 in self.fields[key].keys():
+        '''
+        self.fields_patches = dict()
 
-
+        for key in self.fields.keys():
+            self.fields_patches[key] = dict()
+            for key2 in self.fields[key].keys():
 
 
-            n_patches_i = math.ceil((360)/delta)
-            n_patches_j = math.ceil((180)/delta)
-            patches = []
-            good_ra = []
-            good_dec = []
-            pairs = []
-            for pi in range(n_patches_i):
-                for pj in range(n_patches_j):
-                    pairs.append([pi,pj])
-            for i in frogress.bar(range(len(pairs))):
-                    pi,pj = pairs[i]
 
 
-                    ra_ = 0+delta*pi
-                    dec_ = -90.+delta*pj
+                n_patches_i = math.ceil((360)/delta)
+                n_patches_j = math.ceil((180)/delta)
+                patches = []
+                good_ra = []
+                good_dec = []
+                pairs = []
+                for pi in range(n_patches_i):
+                    for pj in range(n_patches_j):
+                        pairs.append([pi,pj])
+                for i in frogress.bar(range(len(pairs))):
+                        pi,pj = pairs[i]
 
 
-                    size_patch = delta # deg
-                    pixels = np.int(size_patch/(hp.nside2resol(hp.npix2nside(len(self.fields[key][key2])), arcmin=True)/60))
-                    mt1 = hp.gnomview(self.fields[key][key2], rot=(ra_,dec_), xsize=2**np.int(np.log2(pixels)) ,no_plot=True,reso=hp.nside2resol(hp.npix2nside(len(self.fields[key][key2])), arcmin=True),return_projected_map=True)
-                    if np.sum(mt1.flatten())!=0.:
-                        patches.append(mt1)
-                        good_ra.append(ra_)
-                        good_dec.append(dec_)
+                        ra_ = 0+delta*pi
+                        dec_ = -90.+delta*pj
 
-            self.fields_patches[key][key2] = patches
+
+                        size_patch = delta # deg
+                        pixels = np.int(size_patch/(hp.nside2resol(hp.npix2nside(len(self.fields[key][key2])), arcmin=True)/60))
+                        mt1 = hp.gnomview(self.fields[key][key2], rot=(ra_,dec_), xsize=2**np.int(np.log2(pixels)) ,no_plot=True,reso=hp.nside2resol(hp.npix2nside(len(self.fields[key][key2])), arcmin=True),return_projected_map=True)
+                        if np.sum(mt1.flatten())!=0.:
+                            patches.append(mt1)
+                            good_ra.append(ra_)
+                            good_dec.append(dec_)
+
+                self.fields_patches[key][key2] = patches
