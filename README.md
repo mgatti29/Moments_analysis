@@ -16,6 +16,8 @@ The other packages you might need to install are:
 - pandas
 - george
 - xarray
+- cosmolopy==0.4.1
+- pys2let
 
 
 # cosmosis setup to run chains.
