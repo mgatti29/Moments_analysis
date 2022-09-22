@@ -324,6 +324,9 @@ def make_maps(seed):
      'sigma_8' : config['sigma8'],
      'n': config['ns']}
 
+
+    # ****************************************************************************************************************
+    # THE FOLLOWING PARTS READ DARKGRID RAW PARTICLES, MAKE LENS & SHEAR PLANES
     cosmology = FlatLambdaCDM(H0= config['h100']*100. * u.km / u.s / u.Mpc, Om0=config['Om'])
     z_hr = np.linspace(0,10,5001)
     d_hr = cd.comoving_distance(z_hr,**cosmo1)*config['h100']
@@ -351,20 +354,10 @@ def make_maps(seed):
 
     for s_ in frogress.bar(range(len(z_bounds['z-high']))):
         path_ = output+'/'+label_output0+'/lens_{0}_{1}.fits'.format(s_,config['nside_out'])
-        #try:
-        #    if os.path.exists(path_):
-        #        os.remove(path_)
-        #except:
-        #    pass
         if not os.path.exists(path_):
             shell_ = hp.read_map(shell_files[s_])
             shell_ =  (shell_-np.mean(shell_))/np.mean(shell_)
             shell_ = hp.ud_grade(shell_, nside_out = config['nside_out'])
-
-
-                                                                                                       
-
-                    #m_4 = hp.alm2map(hp.map2alm(m_4,lmax = 2048*2),nside = config['nside_out'])
             fits_f = Table()
             fits_f['T'] = shell_
             if os.path.exists(path_):
@@ -407,7 +400,7 @@ def make_maps(seed):
             
                     
             except:
-                if s !=0:
+                if s_ !=0:
                     overdensity_array.append(np.zeros(hp.nside2npix(config['nside_out'])))
                 #pass
 
@@ -433,19 +426,14 @@ def make_maps(seed):
         for s_ in range(kappa_lensing.shape[0]):
             #try:
             path_ = output+'/'+label_output0+'/kappa_{0}_{1}.fits'.format(s_,config['nside_out'])
-            #if not os.path.exists(path_):
-            #    
-            ##    if os.path.exists(path_):
-            ##        os.remove(path_)
-#
-            #    fits_f = Table()
-            #    fits_f['T'] = kappa_lensing[s_]
-            #    fits_f.write(path_)
-            ##except:
-            ##    pass
+            if not os.path.exists(path_):
+
+                fits_f = Table()
+                fits_f['T'] = kappa_lensing[s_]
+                fits_f.write(path_)
         print ('save kappa done')
 
-        # mage g1 and g2 ---
+        # make g1 and g2 & IA ---
         for i in frogress.bar(range(kappa_lensing.shape[0])):
             path_ = output+'/'+label_output0+'/gg_{0}_{1}.fits'.format(i,config['nside_out'])
 
@@ -478,17 +466,14 @@ def make_maps(seed):
     except:
         pass
 
+    # integrate planes given the redshift distributiins ************************************
     mu = pf.open(config['2PT_FILE'])
-
-
 
     redshift_distributions_sources = {'z':None,'bins':dict()}
     redshift_distributions_sources['z'] = mu[6].data['Z_MID']
     for ix in config['sources_bins']:
         redshift_distributions_sources['bins'][ix] = mu[6].data['BIN{0}'.format(ix+1)]
     mu = None
-
-
 
 
     g1_tomo = dict()
@@ -506,33 +491,24 @@ def make_maps(seed):
 
     for i in frogress.bar(range(2,len(comoving_edges)-1)):
 
-            path_ = output+'/'+label_output0+'/lens_{0}_{1}.fits'.format(i,config['nside_out'])
-            #pathk_ = output+'/'+label_output1+'/kappa_{0}_{1}.fits'.format(i-2,config['nside_out'])
+	path_ = output+'/'+label_output0+'/lens_{0}_{1}.fits'.format(i,config['nside_out'])
 
-            pathgg_ = output+'/'+label_output0+'/gg_{0}_{1}.fits'.format(i,config['nside_out'])
+	pathgg_ = output+'/'+label_output0+'/gg_{0}_{1}.fits'.format(i,config['nside_out'])
 
-            #fits_f = Table()
-            #fits_f['g1'] = g1_
-            #fits_f['g2'] = g2_
-            #fits_f['g1_IA'] = g1_IA
-            #fits_f['g2_IA'] = g2_IA
-            #fits_f.write(path_)
-           # try:
-            if 1==1:
-                k_ = pf.open(pathgg_)
-                d_ = pf.open(path_)
-                IA_f = iaa.F_nla(z_centre[i], cosmology.Om0, rho_c1=rho_c1,A_ia = config['A_IA'], eta=config['eta_IA'], z0=config['z0_IA'],  lbar=0., l0=1e-9, beta=0.)
-                #print ((k_[1].data['T']))
-                for tomo_bin in config['sources_bins']:         
-                    m_ = 1.+config['m_sources'][tomo_bin-1]
-                    if SC:
-                        g1_tomo[tomo_bin]  +=  m_*((1.+BIAS_SC*(d_[1].data['T']))*(k_[1].data['g1']+k_[1].data['g1_IA']*IA_f))*nz_kernel_sample_dict[tomo_bin][i]
-                        g2_tomo[tomo_bin]  +=  m_*((1.+BIAS_SC*(d_[1].data['T']))*(k_[1].data['g2']+k_[1].data['g2_IA']*IA_f))*nz_kernel_sample_dict[tomo_bin][i]
-                        d_tomo[tomo_bin] +=  (1.+BIAS_SC*d_[1].data['T'])*nz_kernel_sample_dict[tomo_bin][i]
-                    else:
-                        g1_tomo[tomo_bin]  +=  m_*(k_[1].data['g1']+k_[1].data['g1_IA']*IA_f)*nz_kernel_sample_dict[tomo_bin][i]
-                        g2_tomo[tomo_bin]  +=  m_*(k_[1].data['g2']+k_[1].data['g2_IA']*IA_f)*nz_kernel_sample_dict[tomo_bin][i]
-                        d_tomo[tomo_bin] +=  (1.+BIAS_SC*d_[1].data['T'])*nz_kernel_sample_dict[tomo_bin][i]
+	k_ = pf.open(pathgg_)
+	d_ = pf.open(path_)
+	IA_f = iaa.F_nla(z_centre[i], cosmology.Om0, rho_c1=rho_c1,A_ia = config['A_IA'], eta=config['eta_IA'], z0=config['z0_IA'],  lbar=0., l0=1e-9, beta=0.)
+	#print ((k_[1].data['T']))
+	for tomo_bin in config['sources_bins']:         
+	    m_ = 1.+config['m_sources'][tomo_bin-1]
+	    if SC:
+		g1_tomo[tomo_bin]  +=  m_*((1.+BIAS_SC*(d_[1].data['T']))*(k_[1].data['g1']+k_[1].data['g1_IA']*IA_f))*nz_kernel_sample_dict[tomo_bin][i]
+		g2_tomo[tomo_bin]  +=  m_*((1.+BIAS_SC*(d_[1].data['T']))*(k_[1].data['g2']+k_[1].data['g2_IA']*IA_f))*nz_kernel_sample_dict[tomo_bin][i]
+		d_tomo[tomo_bin] +=  (1.+BIAS_SC*d_[1].data['T'])*nz_kernel_sample_dict[tomo_bin][i]
+	    else:
+		g1_tomo[tomo_bin]  +=  m_*(k_[1].data['g1']+k_[1].data['g1_IA']*IA_f)*nz_kernel_sample_dict[tomo_bin][i]
+		g2_tomo[tomo_bin]  +=  m_*(k_[1].data['g2']+k_[1].data['g2_IA']*IA_f)*nz_kernel_sample_dict[tomo_bin][i]
+		d_tomo[tomo_bin] +=  (1.+BIAS_SC*d_[1].data['T'])*nz_kernel_sample_dict[tomo_bin][i]
 
 
 
@@ -587,21 +563,17 @@ def make_maps(seed):
         #####################################
         pix_ = convert_to_pix_coord(ra1,dec1, nside=config['nside'])
         mask = np.in1d(np.arange(hp.nside2npix(config['nside'])),pix_)
-        # randomise positions; but keep the right weight per pixel.
+	
+        # in what follows we have different ways to sample the maps.
         if MODE_SAMPLING == 'desy3':
+	    # just sample des y3 shear catalog and randomize positions
             pix = pix_
             w = w_
             e1,e2 = mcal_catalog[tomo_bin]['e1'],mcal_catalog[tomo_bin]['e2']
         
         
         elif MODE_SAMPLING == 'randpos_wpos_ell':
-            ###df2 = pd.DataFrame(data = {'w':w_},index = pix_)
-            ###df2 = df2.sample(n=len(pix_),replace=True)
-            ###pix = df2.index
-            ###w = df2['w']
-
-            
-            
+                        
             df2 = pd.DataFrame(data = {'w':w_,'pix_':pix_},index = pix_)
             # poisson sample the weight map ------
             n_mean = np.ones(hp.nside2npix(config['nside']))*len(pix_)/len(np.unique(pix_))
@@ -635,12 +607,7 @@ def make_maps(seed):
             e1,e2 = random_draw_ell_from_w(w,w_,mcal_catalog[tomo_bin]['e1'],mcal_catalog[tomo_bin]['e2'])
         
         elif MODE_SAMPLING == 'randpos_wpos_ell_full':
-            ###df2 = pd.DataFrame(data = {'w':w_},index = pix_)
-            ###df2 = df2.sample(n=len(pix_),replace=True)
-            ###pix = df2.index
-            ###w = df2['w']
-
-
+	
             uu = np.arange(hp.nside2npix(config['nside']))
             n_tot = np.int(hp.nside2npix(config['nside'])*len(pix_)/len(np.unique(pix_)))
             pix = np.random.choice(uu,n_tot)
@@ -653,6 +620,9 @@ def make_maps(seed):
         
         
         elif MODE_SAMPLING == 'randposdepth_wpos_ell': 
+	    # this is the most accurate way and the one described in the source clustering draft. it requires a
+	    # n_density - depth relation, given by the depth_weight dictionary.
+	
             # generate a dataframe --------------
             df2 = pd.DataFrame(data = {'w':w_,'pix_':pix_},index = pix_)
             
@@ -683,7 +653,7 @@ def make_maps(seed):
             e1,e2 = random_draw_ell_from_w(w,w_,mcal_catalog[tomo_bin]['e1'],mcal_catalog[tomo_bin]['e2'])
         
  
-    
+        # now that we decided how to sample the field, let's make new maps! *****************
 
         if SC:
             f = 1./np.sqrt(d_tomo[tomo_bin]/np.sum(nz_kernel_sample_dict[tomo_bin]))   #* (1./np.sqrt(depth_weigth[tomo_bin]))
@@ -691,12 +661,6 @@ def make_maps(seed):
         else:
             f = 1.
             
-        
-      
-        
-        
-        
-        # ++++++++++++++++++++++
         n_map = np.zeros(hp.nside2npix(config['nside']))
         n_map_sc = np.zeros(hp.nside2npix(config['nside']))
 
@@ -708,23 +672,7 @@ def make_maps(seed):
         g1_ = g1_tomo[tomo_bin][pix]
         g2_ = g2_tomo[tomo_bin][pix]
 
-        
-        
 
-        #es1,es2 = np.random.normal(0,std_,len(mcal_catalog[tomo_bin]['e1']))/f,np.random.normal(0,std_,len(mcal_catalog[tomo_bin]['e1']))/f
-        #es1a,es2a =np.random.normal(0,std_,len(mcal_catalog[tomo_bin]['e1']))/f,np.random.normal(0,std_,len(mcal_catalog[tomo_bin]['e1']))/f
-  
-
-
-        '''
-        
-        need to make a map for g and then one for ell and sum. +++++++++++++
-        
-        
-        
-        
-        '''
-        
         
 
         es1,es2 = apply_random_rotation(e1/f, e2/f)
@@ -791,6 +739,7 @@ def make_maps(seed):
         
         #''' 
         
+	# this apply a stric 2 lma cut on the maps...
         g1_map =  hp.alm2map(hp.map2alm(g1_map, lmax=nside*2) ,nside=nside,  lmax=nside*2)
         g2_map =  hp.alm2map(hp.map2alm(g2_map, lmax=nside*2) ,nside=nside,  lmax=nside*2)
         e1r_map =  hp.alm2map(hp.map2alm(e1r_map, lmax=nside*2) ,nside=nside,  lmax=nside*2)
@@ -814,6 +763,9 @@ def make_maps(seed):
 
     save_obj('/global/cfs/cdirs/des/mgatti/temp_maps/{0}'.format(SC_extralab_+nr),sources_maps)
 
+
+
+    # this other part computes the moments ++++++++++++++++++++++++++++++++++++++++++
     conf = dict()
     conf['smoothing_scales'] = np.array([3.2,5.1,8.2,13.1,21.0,33.6,54.,86.,138,221.]) # arcmin
     conf['nside'] = 1024
