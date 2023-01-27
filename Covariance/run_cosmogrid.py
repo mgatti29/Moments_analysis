@@ -713,7 +713,7 @@ if __name__ == '__main__':
                 params_dict['dz4'] = 0.       
                 
                 
-                p = str(f)+'_'+noise_type+'_'+str(Omegam )+'_'+str(s8)+'_'+str(ns)+'_'+str(Ob)+'_'+str(h )+'_'+str(A_IA )+'_'+str(e_IA )+'_w'+str(w0)+'_'+str(i+1)+'_noise_'+str(nn)
+                p = str(f)+'_'+noise_type+'_SC_'+SC+'_'+str(Omegam )+'_'+str(s8)+'_'+str(ns)+'_'+str(Ob)+'_'+str(h )+'_'+str(A_IA )+'_'+str(e_IA )+'_w'+str(w0)+'_'+str(i+1)+'_noise_'+str(nn)
      
               
                 if not os.path.exists(output_temp+p+'.pkl'):
