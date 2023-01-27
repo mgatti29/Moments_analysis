@@ -614,8 +614,8 @@ def make_maps(seed):
 nside = 512 #nside cosmogrid particle count maps
 nside_out = 1024 #nside final noisy maps
 SC = True #apply SC or not
-noise_rels = 4 # number of noise realisations considered 
-rot_num = 1 # number of rotations considered (max 4)
+noise_rels = 1 # number of noise realisations considered 
+rot_num = 4 # number of rotations considered (max 4)
 A_IA = 0.0
 e_IA = 0.0
 runs_cosmo = 200 # number of cosmogrid independent maps 
