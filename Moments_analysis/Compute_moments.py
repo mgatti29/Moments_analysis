@@ -634,7 +634,7 @@ class moments_map(object):
         
         
 
-    def compute_WHMP_S01(self,label_moments,field_label1,field_label2=None,denoise1= None,denoise2 = None, tomo_bins1 = [0,1], tomo_bins2 = None):
+    def compute_WHMP_S01(self,label_moments,field_label1,field_label2=None,denoise1= None,denoise2 = None, tomo_bins1 = [0,1], tomo_bins2 = None,min_d = 0.1):
         '''
         computes S01
         '''
@@ -661,16 +661,17 @@ class moments_map(object):
                 for kk, sm1 in enumerate(self.conf['smoothing_scales']):
                         for kk1, sm2 in enumerate(self.conf['smoothing_scales']):
                             if kk1<=kk:
-                                if (sm1-sm2)**2<4:
+                                if (sm1-sm2)**2<min_d:
                                     count += 1
                 moments_2 = np.zeros(count)
 
                 # this allows you to skip the computation of some moments due to simmetry reasons
                 u = 0
+                scales = []
                 for kk, sm1 in enumerate(self.conf['smoothing_scales']):
                         for kk1, sm2 in enumerate(self.conf['smoothing_scales']):
                             if kk1<=kk:
-                                if (sm1-sm2)**2<4:
+                                if (sm1-sm2)**2<min_d:
                                     
                                     mute = pf.open(self.smoothed_maps[field_label1][bin1][sm1],memmap=False)
                                     map_signal1 = copy.copy(mute[1].data['map'])
@@ -698,6 +699,8 @@ class moments_map(object):
                                         moments_2[u] = np.mean(map_signal1*map_signal2) - np.mean(map_rndm1*map_rndm2)
                                     else:
                                         moments_2[u] = np.mean(map_signal1*map_signal2)
+                                        
+                                    scales.append(sm1+sm2)
                                     u += 1
 
 
@@ -871,7 +874,7 @@ class moments_map(object):
             m_ref = hp.gnomview(map_test_, rot=(ra_,dec_), xsize=xsize ,no_plot=True,reso=res,return_projected_map=True)
 
             if (1.*np.sum((m_ref.data).flatten())/np.sum(map_test_uniform_.flatten()))>threshold: # more than 20% of the stamp!
-                pairs.append([ra_,dec_])
+                pairs.append([ra_,dec_,i_])
                 count_area += (res/60.)**2 *np.sum(m_ref)
 
         print ('TOTAL AREA: ' ,count_area)
@@ -889,8 +892,12 @@ class moments_map(object):
                 patches = []
 
                 for i in frogress.bar(range(len(pairs))):
-                    ra_,dec_ = pairs[i]
-                    mt1 = hp.gnomview(self.fields[key][key2], rot=(ra_,dec_), xsize=xsize ,no_plot=True,reso=res,return_projected_map=True)
+                    ra_,dec_,i_ = pairs[i]
+                    
+                    fieldc = copy.deepcopy(self.fields[key][key2])
+                    mask_ = np.in1d(pix_large_convert,i_)
+                    fieldc[~mask_] = 0.
+                    mt1 = hp.gnomview(fieldc, rot=(ra_,dec_), xsize=xsize ,no_plot=True,reso=res,return_projected_map=True)
 
                     patches.append(mt1.data)
                     
