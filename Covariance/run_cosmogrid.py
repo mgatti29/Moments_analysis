@@ -451,23 +451,11 @@ def make_maps(seed):
 
     # apply rotations and change nside
     for tomo_bin in config['sources_bins']:
-        if rot ==0:
-            g1_tomo[tomo_bin] = hp.pixelfunc.ud_grade(g1_tomo[tomo_bin],nside_out=nside_out)
-            g2_tomo[tomo_bin] = hp.pixelfunc.ud_grade(g2_tomo[tomo_bin],nside_out=nside_out)                   
-            d_tomo[tomo_bin] =  hp.pixelfunc.ud_grade(d_tomo[tomo_bin] ,nside_out=nside_out)
-        elif (rot ==1):
-            g1_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(g1_tomo[tomo_bin],[ 180 ,0 , 0], flip=False,nside = config['nside']),nside_out=nside_out)
-            g2_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(g2_tomo[tomo_bin],[ 180 ,0 , 0], flip=False,nside = config['nside']),nside_out=nside_out)
-            d_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(d_tomo[tomo_bin],[ 180 ,0 , 0], flip=False,nside = config['nside']),nside_out=nside_out)
-        elif rot ==2:
-            g1_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(g1_tomo[tomo_bin],[ 90 ,0 , 0], flip=True,nside = config['nside']),nside_out=nside_out)
-            g2_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(g2_tomo[tomo_bin],[ 90 ,0 , 0], flip=True,nside = config['nside']),nside_out=nside_out)
-            d_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(d_tomo[tomo_bin],[ 90 ,0 , 0], flip=True,nside = config['nside']),nside_out=nside_out)
-        elif rot ==3:
-            g1_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(g1_tomo[tomo_bin],[ 270 ,0 , 0], flip=True,nside = config['nside']),nside_out=nside_out)
-            g2_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(g2_tomo[tomo_bin],[ 270 ,0 , 0], flip=True,nside = config['nside']),nside_out=nside_out)
-            d_tomo[tomo_bin] = hp.pixelfunc.ud_grade(rotate_map_approx(d_tomo[tomo_bin],[ 270 ,0 , 0], flip=True,nside = config['nside']),nside_out=nside_out)
-
+        
+        g1_tomo[tomo_bin] = hp.pixelfunc.ud_grade(g1_tomo[tomo_bin],nside_out=nside_out)
+        g2_tomo[tomo_bin] = hp.pixelfunc.ud_grade(g2_tomo[tomo_bin],nside_out=nside_out)                   
+        d_tomo[tomo_bin] =  hp.pixelfunc.ud_grade(d_tomo[tomo_bin] ,nside_out=nside_out)
+ 
 
             
    # Add noise ++++++++++++++++++++++++++++++++=
@@ -478,8 +466,46 @@ def make_maps(seed):
             depth_weigth = np.load('/global/cfs/cdirs/des/mass_maps/Maps_final/depth_maps_Y3_{0}_numbdensity.npy'.format(nside_out),allow_pickle=True).item()
             mcal_catalog = load_obj('/global/cfs/cdirs/des/mass_maps/Maps_final/data_catalogs_weighted_{0}'.format(tomo_bin-1))
 
-
             pix_ = convert_to_pix_coord(mcal_catalog['ra'], mcal_catalog['dec'], nside=nside_out)
+            dp_ = copy.deepcopy(depth_weigth[tomo_bin-1])
+            if rot ==1:
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 180 ,0 , 0], flip=False,nside =nside_out )
+                rot_angles = [180, 0, 0]
+                flip=False
+                rot = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                rot_alpha, rot_delta = rot(alpha, delta)
+                if not flip:
+                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                else:
+                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                pix_ = rot_i[pix_]
+            if rot ==2:
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 90 ,0 , 0], flip=True,nside = nside_out )
+
+                rot_angles = [90, 0, 0]
+                flip=True
+                rot = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                rot_alpha, rot_delta = rot(alpha, delta)
+                if not flip:
+                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                else:
+                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                pix_ = rot_i[pix_]
+            if rot ==3:
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 270 ,0 , 0], flip=True,nside = nside_out)
+
+                rot_angles = [270, 0, 0]
+                flip=True
+                rot = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                rot_alpha, rot_delta = rot(alpha, delta)
+                if not flip:
+                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                else:
+                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                pix_ = rot_i[pix_]   
             mask = np.in1d(np.arange(hp.nside2npix(nside_out)),pix_)
 
 
@@ -531,6 +557,48 @@ def make_maps(seed):
             e2 = mcal_catalog['e2']
             w = mcal_catalog['w'] 
             pix = convert_to_pix_coord(ra1,dec1, nside=nside_out)
+            pix = convert_to_pix_coord(ra1,dec1, nside=nside_out)
+            
+            
+            if rot ==1:
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 180 ,0 , 0], flip=False,nside =nside_out )
+                rot_angles = [180, 0, 0]
+                flip=False
+                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                rot_alpha, rot_delta = rotu(alpha, delta)
+                if not flip:
+                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                else:
+                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                pix = rot_i[pix]
+            if rot ==2:
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 90 ,0 , 0], flip=True,nside = nside_out )
+
+                rot_angles = [90, 0, 0]
+                flip=True
+                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                rot_alpha, rot_delta = rotu(alpha, delta)
+                if not flip:
+                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                else:
+                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                pix = rot_i[pix]
+            if rot ==3:
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 270 ,0 , 0], flip=True,nside = nside_out)
+
+                rot_angles = [270, 0, 0]
+                flip=True
+                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                rot_alpha, rot_delta = rotu(alpha, delta)
+                if not flip:
+                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                else:
+                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                pix = rot_i[pix]     
+
             del mcal_catalog
             gc.collect() 
             
