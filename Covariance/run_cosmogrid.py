@@ -801,4 +801,4 @@ if __name__ == '__main__':
         comm.bcast(run_count,root = 0)
         comm.Barrier() 
     
-##srun --nodes=4 --tasks-per-node=64 --cpus-per-task=1 --cpu-bind=cores  python run_cosmogrid.py
+##srun --nodes=4 --tasks-per-node=32 --cpus-per-task=2 --cpu-bind=cores  python run_cosmogrid.py
