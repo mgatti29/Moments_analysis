@@ -5,6 +5,7 @@ import numpy as np
 import os
 from astropy.table import Table
 import gc
+import copy
 import pyfits as pf
 from Moments_analysis import g2k_sphere
 import timeit
@@ -437,7 +438,7 @@ def make_maps(seed):
             IA_f = iaa.F_nla(z_centre[i], cosmology.Om0, rho_c1=rho_c1,A_ia = config['A_IA'], eta=config['eta_IA'], z0=config['z0_IA'],  lbar=0., l0=1e-9, beta=0.)
             #print ((k_[1].data['T']))
             for tomo_bin in config['sources_bins']:         
-                m_ = 1.+config['m_sources'][tomo_bin-1]
+                m_ = 1.+config['m_sources'][tomo_bin]
                 b = 1.#extra_params['db'][tomo_bin]
                 if SC:
                     g1_tomo[tomo_bin]  +=  ((1.+(b*d_[1].data['T']))*(k_[1].data['g1']+k_[1].data['g1_IA']*IA_f))*nz_kernel_sample_dict[tomo_bin][i]
@@ -464,47 +465,47 @@ def make_maps(seed):
     for tomo_bin in config['sources_bins']:   
         if noise_type == 'random_depth':
             depth_weigth = np.load('/global/cfs/cdirs/des/mass_maps/Maps_final/depth_maps_Y3_{0}_numbdensity.npy'.format(nside_out),allow_pickle=True).item()
-            mcal_catalog = load_obj('/global/cfs/cdirs/des/mass_maps/Maps_final/data_catalogs_weighted_{0}'.format(tomo_bin-1))
+            mcal_catalog = load_obj('/global/cfs/cdirs/des/mass_maps/Maps_final/data_catalogs_weighted_{0}'.format(tomo_bin))
 
-            pix_ = convert_to_pix_coord(mcal_catalog['ra'], mcal_catalog['dec'], nside=nside_out)
-            dp_ = copy.deepcopy(depth_weigth[tomo_bin-1])
+            pix_ = convert_to_pix_coord(mcal_catalog['ra'], mcal_catalog['dec'], nside=config['nside_out'])
+            dp_ = copy.deepcopy(depth_weigth[tomo_bin])
             if rot ==1:
-                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 180 ,0 , 0], flip=False,nside =nside_out )
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin],[ 180 ,0 , 0], flip=False,nside =config['nside_out'] )
                 rot_angles = [180, 0, 0]
                 flip=False
                 rot = hp.rotator.Rotator(rot=rot_angles, deg=True)
-                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                alpha, delta = hp.pix2ang(config['nside_out'], np.arange(hp.nside2npix(config['nside_out'])))
                 rot_alpha, rot_delta = rot(alpha, delta)
                 if not flip:
-                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
                 else:
-                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
                 pix_ = rot_i[pix_]
             if rot ==2:
-                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 90 ,0 , 0], flip=True,nside = nside_out )
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin],[ 90 ,0 , 0], flip=True,nside = config['nside_out'] )
 
                 rot_angles = [90, 0, 0]
                 flip=True
                 rot = hp.rotator.Rotator(rot=rot_angles, deg=True)
-                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                alpha, delta = hp.pix2ang(config['nside_out'], np.arange(hp.nside2npix(config['nside_out'])))
                 rot_alpha, rot_delta = rot(alpha, delta)
                 if not flip:
-                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
                 else:
-                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
                 pix_ = rot_i[pix_]
             if rot ==3:
-                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 270 ,0 , 0], flip=True,nside = nside_out)
+                dp_ = rotate_map_approx(depth_weigth[tomo_bin],[ 270 ,0 , 0], flip=True,nside = config['nside_out'])
 
                 rot_angles = [270, 0, 0]
                 flip=True
                 rot = hp.rotator.Rotator(rot=rot_angles, deg=True)
-                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                alpha, delta = hp.pix2ang(config['nside_out'], np.arange(hp.nside2npix(config['nside_out'])))
                 rot_alpha, rot_delta = rot(alpha, delta)
                 if not flip:
-                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
                 else:
-                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
                 pix_ = rot_i[pix_]   
             mask = np.in1d(np.arange(hp.nside2npix(nside_out)),pix_)
 
@@ -515,7 +516,7 @@ def make_maps(seed):
 
            
             df2 = pd.DataFrame(data = {'w':mcal_catalog['w'] ,'pix_':pix_},index = pix_)
-            nn = np.random.poisson(depth_weigth[tomo_bin-1])
+            nn = np.random.poisson(depth_weigth[tomo_bin])
             nn[~mask]= 0
 
 
@@ -556,47 +557,30 @@ def make_maps(seed):
             e1 = mcal_catalog['e1']
             e2 = mcal_catalog['e2']
             w = mcal_catalog['w'] 
-            pix = convert_to_pix_coord(ra1,dec1, nside=nside_out)
-            pix = convert_to_pix_coord(ra1,dec1, nside=nside_out)
-            
-            
+            pix = convert_to_pix_coord(ra1,dec1, nside=config['nside_out'])
+
             if rot ==1:
-                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 180 ,0 , 0], flip=False,nside =nside_out )
-                rot_angles = [180, 0, 0]
-                flip=False
-                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
-                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                alpha, delta = hp.pix2ang(config['nside_out'],pix)
                 rot_alpha, rot_delta = rotu(alpha, delta)
                 if not flip:
-                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
                 else:
-                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
                 pix = rot_i[pix]
             if rot ==2:
-                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 90 ,0 , 0], flip=True,nside = nside_out )
-
-                rot_angles = [90, 0, 0]
-                flip=True
-                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
-                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
-                rot_alpha, rot_delta = rotu(alpha, delta)
+                alpha, delta = hp.pix2ang(config['nside_out'],pix)
                 if not flip:
-                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
                 else:
-                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
                 pix = rot_i[pix]
             if rot ==3:
-                dp_ = rotate_map_approx(depth_weigth[tomo_bin-1],[ 270 ,0 , 0], flip=True,nside = nside_out)
-
-                rot_angles = [270, 0, 0]
-                flip=True
-                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
-                alpha, delta = hp.pix2ang(512, np.arange(hp.nside2npix(512)))
+                alpha, delta = hp.pix2ang(config['nside_out'],pix)
                 rot_alpha, rot_delta = rotu(alpha, delta)
                 if not flip:
-                    rot_i = hp.ang2pix(512, rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
                 else:
-                    rot_i = hp.ang2pix(512, np.pi-rot_alpha, rot_delta)
+                    rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
                 pix = rot_i[pix]     
 
             del mcal_catalog
@@ -651,7 +635,7 @@ def make_maps(seed):
 
 
 
-        m_ = 1.+config['m_sources'][tomo_bin-1]
+        m_ = 1.+config['m_sources'][tomo_bin]
 
         EE,BB,_   =  g2k_sphere(m_*e1_map,  m_*e2_map, mask_sims, nside=nside_out, lmax=nside_out*2 ,nosh=True)
         EEn,BBn,_ =  g2k_sphere(m_*e1r_map, m_*e2r_map, mask_sims, nside=nside_out, lmax=nside_out*2 ,nosh=True)
@@ -681,35 +665,36 @@ def make_maps(seed):
 # some config
 nside = 512 #nside cosmogrid particle count maps
 nside_out = 1024 #nside final noisy maps
-SC = False #apply SC or not
+SC = True #apply SC or not
 noise_rels = 1 # number of noise realisations considered 
 rot_num = 1 # number of rotations considered (max 4)
 A_IA = 0.0
 e_IA = 0.0
-runs_cosmo = 150 # number of cosmogrid independent maps 
-noise_type = 'desy3' # or 'random_depth'
+runs_cosmo = 200 # number of cosmogrid independent maps 
+noise_type = 'random_depth' # or 'random_depth'
 
 
 # this is the path to the cosmogrid sims. Chose among the ones below
 #path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_s8_p/'
 #path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_s8_m/'
-path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_Om_p/'
+#path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_Om_p/'
 #path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_Om_m/'
-#path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_fiducial/' # this is the fiducal
+path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_fiducial/' # this is the fiducal
 
 # this is the path to intermediate products like kappa g1 g2 maps (already run)
 # chose one among the ones below
 #output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_s8_m/'
 #output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_s8_p/'
-output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_Om_p/'
+#output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_Om_p/'
 #output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_Om_m/'
-#output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/' # this is the fiducial run
+output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/' # this is the fiducial run
 
 
 # the final noisy maps will be saved here
-#output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/fiducial_noSC/'
+output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/fiducial_noSC/'
 #output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/s8m_noSC/'
-output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/Omp_noSC/'
+#output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/Omp_noSC/'
+output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/fiducial_SC/'
 
 if not os.path.exists(output_intermediate_maps):
     try:
@@ -798,6 +783,7 @@ if __name__ == '__main__':
     
     print (len(runstodo),count,miss)
 
+    #make_maps(runstodo[0])
     
     run_count=0
     from mpi4py import MPI 
@@ -805,13 +791,14 @@ if __name__ == '__main__':
         comm = MPI.COMM_WORLD
 #
         if (run_count+comm.rank)<len(runstodo):
-            try:
+           # try:
                 make_maps(runstodo[run_count+comm.rank])
-            except:
-                pass
+           # except:
+           #     pass
         #if (run_count)<len(runstodo):
         #    make_maps(runstodo[run_count])
         run_count+=comm.size
         comm.bcast(run_count,root = 0)
         comm.Barrier() 
+    
 ##srun --nodes=4 --tasks-per-node=64 --cpus-per-task=1 --cpu-bind=cores  python run_cosmogrid.py
