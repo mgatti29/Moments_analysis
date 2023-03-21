@@ -681,33 +681,35 @@ def make_maps(seed):
 # some config
 nside = 512 #nside cosmogrid particle count maps
 nside_out = 1024 #nside final noisy maps
-SC = True #apply SC or not
+SC = False #apply SC or not
 noise_rels = 1 # number of noise realisations considered 
-rot_num = 4 # number of rotations considered (max 4)
+rot_num = 1 # number of rotations considered (max 4)
 A_IA = 0.0
 e_IA = 0.0
-runs_cosmo = 200 # number of cosmogrid independent maps 
+runs_cosmo = 150 # number of cosmogrid independent maps 
 noise_type = 'desy3' # or 'random_depth'
 
 
 # this is the path to the cosmogrid sims. Chose among the ones below
 #path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_s8_p/'
 #path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_s8_m/'
-#path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_Om_p/'
-path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_Om_m/'
+path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_Om_p/'
+#path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_delta_Om_m/'
 #path_sims = '/global/cfs/cdirs/des/cosmogrid/raw/fiducial/cosmo_fiducial/' # this is the fiducal
 
 # this is the path to intermediate products like kappa g1 g2 maps (already run)
 # chose one among the ones below
 #output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_s8_m/'
 #output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_s8_p/'
-#output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_Om_p/'
-output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_Om_m/'
+output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_Om_p/'
+#output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/cosmo_delta_Om_m/'
 #output_intermediate_maps = '/global/cfs/cdirs/des/mgatti/cosmogrid/' # this is the fiducial run
 
 
 # the final noisy maps will be saved here
-output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/temp_virginia/'
+#output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/fiducial_noSC/'
+#output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/s8m_noSC/'
+output_temp = '/global/cfs/cdirs/des/mgatti/cosmogrid/new_sims_SC/Omp_noSC/'
 
 if not os.path.exists(output_intermediate_maps):
     try:
@@ -781,7 +783,7 @@ if __name__ == '__main__':
                 params_dict['dz4'] = 0.       
                 
                 
-                p = str(f)+'_'+noise_type+'_SC_'+SC+'_'+str(Omegam )+'_'+str(s8)+'_'+str(ns)+'_'+str(Ob)+'_'+str(h )+'_'+str(A_IA )+'_'+str(e_IA )+'_w'+str(w0)+'_'+str(i+1)+'_noise_'+str(nn)
+                p = str(f)+'_'+noise_type+'_'+str(Omegam )+'_'+str(s8)+'_'+str(ns)+'_'+str(Ob)+'_'+str(h )+'_'+str(A_IA )+'_'+str(e_IA )+'_w'+str(w0)+'_'+str(i+1)+'_noise_'+str(nn)
      
               
                 if not os.path.exists(output_temp+p+'.pkl'):
@@ -803,10 +805,10 @@ if __name__ == '__main__':
         comm = MPI.COMM_WORLD
 #
         if (run_count+comm.rank)<len(runstodo):
-            #try:
+            try:
                 make_maps(runstodo[run_count+comm.rank])
-            #except:
-            #    pass
+            except:
+                pass
         #if (run_count)<len(runstodo):
         #    make_maps(runstodo[run_count])
         run_count+=comm.size
