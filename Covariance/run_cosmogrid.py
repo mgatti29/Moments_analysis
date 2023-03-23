@@ -516,7 +516,7 @@ def make_maps(seed):
 
            
             df2 = pd.DataFrame(data = {'w':mcal_catalog['w'] ,'pix_':pix_},index = pix_)
-            nn = np.random.poisson(depth_weigth[tomo_bin])
+            nn = np.random.poisson(dp_)
             nn[~mask]= 0
 
 
