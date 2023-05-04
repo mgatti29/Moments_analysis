@@ -559,8 +559,14 @@ def make_maps(seed):
             w = mcal_catalog['w'] 
             pix = convert_to_pix_coord(ra1,dec1, nside=config['nside_out'])
 
+            
+            
+            
             if rot ==1:
-                alpha, delta = hp.pix2ang(config['nside_out'],pix)
+                rot_angles = [180, 0, 0]
+                flip=False
+                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(config['nside_out'], np.arange(hp.nside2npix(config['nside_out'])))
                 rot_alpha, rot_delta = rotu(alpha, delta)
                 if not flip:
                     rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
@@ -568,20 +574,29 @@ def make_maps(seed):
                     rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
                 pix = rot_i[pix]
             if rot ==2:
-                alpha, delta = hp.pix2ang(config['nside_out'],pix)
+                
+                rot_angles = [90, 0, 0]
+                flip=True
+                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(config['nside_out'], np.arange(hp.nside2npix(config['nside_out'])))
+                rot_alpha, rot_delta = rotu(alpha, delta)
                 if not flip:
                     rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
                 else:
                     rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
                 pix = rot_i[pix]
             if rot ==3:
-                alpha, delta = hp.pix2ang(config['nside_out'],pix)
+                
+                rot_angles = [270, 0, 0]
+                flip=True
+                rotu = hp.rotator.Rotator(rot=rot_angles, deg=True)
+                alpha, delta = hp.pix2ang(config['nside_out'], np.arange(hp.nside2npix(config['nside_out'])))
                 rot_alpha, rot_delta = rotu(alpha, delta)
                 if not flip:
                     rot_i = hp.ang2pix(config['nside_out'], rot_alpha, rot_delta)
                 else:
                     rot_i = hp.ang2pix(config['nside_out'], np.pi-rot_alpha, rot_delta)
-                pix = rot_i[pix]     
+                pix = rot_i[pix]    
 
             del mcal_catalog
             gc.collect() 
