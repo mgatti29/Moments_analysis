@@ -26,43 +26,64 @@ except:
     print ('missing pywph')
 
 class moments_map(object):
-    def __init__(self,conf = {'output_folder': './'}):
+    def __init__(self, conf={'output_folder': './'}):
         '''
         Initialise the moments_map object.
+        
+        Parameters:
+        - conf (dict): Configuration parameters for the moments_map object.
+                       Default is {'output_folder': './'}.
         '''
         self.conf = conf
         self.smoothed_maps = dict()
         self.fields = dict()
         self.moments = dict()
+        
+        # Create the output folder if it doesn't exist
         try:
             if not os.path.exists(self.conf['output_folder']):
                 os.mkdir((self.conf['output_folder']))
         except:
             pass
+        
+        # Create the smoothed maps folder if it doesn't exist
         try:
             if not os.path.exists((self.conf['output_folder'])+'/smoothed_maps/'):
                 os.mkdir((self.conf['output_folder'])+'/smoothed_maps/')
         except:
             pass
-    def add_map(self, map_, field_label ='', tomo_bin = 0):
+    
+    def add_map(self, map_, field_label='', tomo_bin=0):
         '''
-        Add a map_ to the class 'fields' entry. need to specify
-        the field label and the tomo_bin.
+        Add a map to the fields dictionary.
+        
+        Parameters:
+        - map_ (array-like): The map to be added.
+        - field_label (str): The label for the field.
+        - tomo_bin (int): The tomo_bin value.
         '''
         if field_label in self.fields.keys():
             self.fields[field_label][tomo_bin] = copy.deepcopy(map_)
         else:
             self.fields[field_label] = dict()
             self.fields[field_label][tomo_bin] = copy.deepcopy(map_)
-            
-            
+
+
+
+
     def transform_and_smooth(self, output_label = '', field_label1 = '', field_label2 = None, shear = True, tomo_bins = [0], overwrite = False, skip_loading_smoothed_maps = False, skip_conversion_toalm = False):
-        '''
-        It takes 1 (2) field(s), compute the harmonic coefficients, multiply a top hat function, a gives back the smoothed map. If shear = True, it assumes the field1,field2 = e1,e2 and makes the conversion to k_E and k_B. The smoothed maps are also saved.
-        n.b.: the two following keywordare normally set to False except when computing the covariance. it helps
-        saving memory.
-        skip_loading_smoothed_maps -> if the smoothed map already exists, it doesn't load it.
-        skip_conversion_toalm  -> this can be set True if all the smoothed maps already exist. it skips the the conversion to alm from the field maps.
+       '''
+        Transform and smooth the field maps.
+        
+        Parameters:
+        - output_label (str): The label for the output smoothed maps.
+        - field_label1 (str): The label for the first field.
+        - field_label2 (str or None): The label for the second field (if applicable).
+        - shear (bool): True if the fields represent shear (e1, e2), False if density field.
+        - tomo_bins (list): List of tomo_bin values.
+        - overwrite (bool): True to overwrite existing smoothed maps, False otherwise.
+        - skip_loading_smoothed_maps (bool): True to skip loading existing smoothed maps, False otherwise.
+        - skip_conversion_toalm (bool): True to skip conversion to alm from field maps, False otherwise.
         '''
         
         lmax = self.conf['lmax']
@@ -166,15 +187,24 @@ class moments_map(object):
             del alms_container
             gc.collect()
 
+            
+            
     def transform_and_smooth_sp(self, output_label = '', field_label1 = '', field_label2 = None, shear = True, tomo_bins = [0], overwrite = False, skip_loading_smoothed_maps = False, skip_conversion_toalm = False):
         '''
-        It takes 1 (2) field(s), compute the harmonic coefficients, multiply a top hat function, a gives back the smoothed map. If shear = True, it assumes the field1,field2 = e1,e2 and makes the conversion to k_E and k_B. The smoothed maps are also saved.
-        n.b.: the two following keywordare normally set to False except when computing the covariance. it helps
-        saving memory.
-        skip_loading_smoothed_maps -> if the smoothed map already exists, it doesn't load it.
-        skip_conversion_toalm  -> this can be set True if all the smoothed maps already exist. it skips the the conversion to alm from the field maps.
-        '''
+        Transform and smooth the field(s) represented by field_label1 and field_label2 (optional) 
+        and generate smoothed maps. If shear=True, it assumes field1, field2 = e1, e2 and 
+        converts them to k_E and k_B modes. The smoothed maps are also saved.
         
+        Parameters:
+        - output_label (str): Label for the output smoothed maps.
+        - field_label1 (str): Label for the first field.
+        - field_label2 (str): Label for the second field (optional).
+        - shear (bool): Indicates if the fields represent shear (e1, e2) or density fields.
+        - tomo_bins (list): List of tomo_bin values to process.
+        - overwrite (bool): Indicates if existing smoothed maps should be overwritten.
+        - skip_loading_smoothed_maps (bool): Indicates if loading of existing smoothed maps should be skipped.
+        - skip_conversion_toalm (bool): Indicates if conversion to alm from field maps should be skipped.
+        '''
         lmax = self.conf['lmax']
         nside = self.conf['nside']
         ll = ['kE','kB']
@@ -273,11 +303,19 @@ class moments_map(object):
         
     def transform_and_smooth_sp_dir(self, output_label = '', field_label1 = '', field_label2 = None, shear = True, tomo_bins = [0], overwrite = False, skip_loading_smoothed_maps = False, skip_conversion_toalm = False):
         '''
-        It takes 1 (2) field(s), compute the harmonic coefficients, multiply a top hat function, a gives back the smoothed map. If shear = True, it assumes the field1,field2 = e1,e2 and makes the conversion to k_E and k_B. The smoothed maps are also saved.
-        n.b.: the two following keywordare normally set to False except when computing the covariance. it helps
-        saving memory.
-        skip_loading_smoothed_maps -> if the smoothed map already exists, it doesn't load it.
-        skip_conversion_toalm  -> this can be set True if all the smoothed maps already exist. it skips the the conversion to alm from the field maps.
+        Transform and smooth the field(s) represented by field_label1 and field_label2 (optional) 
+        and generate smoothed maps. If shear=True, it assumes field1, field2 = e1, e2 and 
+        converts them to k_E and k_B modes. The smoothed maps are also saved.
+        
+        Parameters:
+        - output_label (str): Label for the output smoothed maps.
+        - field_label1 (str): Label for the first field.
+        - field_label2 (str): Label for the second field (optional).
+        - shear (bool): Indicates if the fields represent shear (e1, e2) or density fields.
+        - tomo_bins (list): List of tomo_bin values to process.
+        - overwrite (bool): Indicates if existing smoothed maps should be overwritten.
+        - skip_loading_smoothed_maps (bool): Indicates if loading of existing smoothed maps should be skipped.
+        - skip_conversion_toalm (bool): Indicates if conversion to alm from field maps should be skipped.
         '''
         
         lmax = self.conf['lmax']
@@ -391,12 +429,19 @@ class moments_map(object):
             
     def compute_moments(self, label_moments='', field_label1 ='', field_label2  =None, denoise1 = None, denoise2 = None, tomo_bins1 = [0,1,2,3], tomo_bins2 = None):
         '''
-        computes second and third moments given different fields.
-        if field_label2 is provided, it will compute the moments cross moments between fields.
-        The denoise option is to subtract shape noise/shot noise.
-        
-        second moments = field_1 field_2
-        third moments field_1 field_2 field_3
+        Computes second and third moments given different fields.
+
+        Parameters:
+        - label_moments: A string representing the label for the computed moments. It is used to store the moments in the `self.moments` dictionary.
+        - field_label1: A string representing the label of the first field.
+        - field_label2: A string representing the label of the second field. If provided, the function will compute cross-moments between the two fields.
+        - denoise1: A string representing the label of the denoised field for the first field. If provided, shape noise/shot noise will be subtracted.
+        - denoise2: A string representing the label of the denoised field for the second field. If provided, shape noise/shot noise will be subtracted.
+        - tomo_bins1: A list of integers representing the tomographic bins for the first field.
+        - tomo_bins2: A list of integers representing the tomographic bins for the second field. If not provided, it defaults to `tomo_bins1`.
+
+        Second moments: field_1 * field_2
+        Third moments: field_1 * field_2 * field_3
         '''
         moments_mute = dict()
 
@@ -636,8 +681,19 @@ class moments_map(object):
 
     def compute_WHMP_S01(self,label_moments,field_label1,field_label2=None,denoise1= None,denoise2 = None, tomo_bins1 = [0,1], tomo_bins2 = None,min_d = 0.1):
         '''
-        computes S01
+        Computes S01 moments.
+
+        Parameters:
+        - label_moments: A string representing the label for the computed moments. It is used to store the moments in the `self.moments` dictionary.
+        - field_label1: A string representing the label of the first field.
+        - field_label2: A string representing the label of the second field. If provided, the function will compute cross-moments between the two fields.
+        - denoise1: A string representing the label of the denoised field for the first field. If provided, shape noise/shot noise will be subtracted.
+        - denoise2: A string representing the label of the denoised field for the second field. If provided, shape noise/shot noise will be subtracted.
+        - tomo_bins1: A list of integers representing the tomographic bins for the first field.
+        - tomo_bins2: A list of integers representing the tomographic bins for the second field. If not provided, it defaults to `tomo_bins1`.
+        - min_d: A float representing the minimum difference between smoothing scales squared for the computation of moments.
         '''
+
         moments_mute = dict()
 
 
@@ -909,6 +965,19 @@ class moments_map(object):
 
         
     def compute_moments_pywhm(self,label,field1,field2,denoise1=None,denoise2=None):
+        '''
+        Computes the pyWHM1 moments.
+
+        Parameters:
+        - label: A string representing the label for the computed moments.
+        - field1: The label of the first field.
+        - field2: The label of the second field.
+        - denoise1: The label of the denoised first field.
+        - denoise2: The label of the denoised second field.
+
+        Returns:
+        - None
+        '''
         M = self.patch_size[0]
         N = self.patch_size[1]
         tomo_bins = list(self.fields_patches[field1].keys())
@@ -1021,7 +1090,19 @@ class moments_map(object):
                     
                     
     def compute_moments_pywhm1(self,label,field1,field2,denoise1=None,denoise2=None):
-        
+       '''
+        Computes the pyWHM moments.
+
+        Parameters:
+        - label: A string representing the label for the computed moments.
+        - field1: The label of the first field.
+        - field2: The label of the second field.
+        - denoise1: The label of the denoised first field.
+        - denoise2: The label of the denoised second field.
+
+        Returns:
+        - None
+        '''
         M = self.fields_patches[field1][list(self.fields_patches[field1].keys())[0]][0][0]
         N = self.fields_patches[field1][list(self.fields_patches[field1].keys())[0]][0][1]
         tomo_bins = list(self.fields_patches[field1].keys())
@@ -1068,6 +1149,18 @@ class moments_map(object):
                     
 
     def compute_phwmoments_sphere(self,label = '',field1 = 'kE',field2 = 'kE',tomo_bins=[0,1,2,3]):
+        '''
+        Computes the pyWPH moments on the sphere.
+
+        Parameters:
+        - label: A string representing the label for the computed moments.
+        - field1: The label of the first field.
+        - field2: The label of the second field.
+        - tomo_bins: A list of integers representing the tomographic bins.
+
+        Returns:
+        - None
+        '''
         self.moments_pywph__[label] = dict()
         self.moments_pywph_indexes[label] = dict()
         J_min = self.conf['J_min']
@@ -1158,20 +1251,43 @@ class moments_map(object):
                 self.moments_pywph__[label]['{0}_{1}'.format(ti,tj)]['Cphase'] = np.array(self.moments_pywph__[label]['{0}_{1}'.format(ti,tj)]['Cphase'])
 
 
-def phase_transform(field,p=0):
-    return np.abs(field)*np.exp(1.j*p*np.angle(field))
+def phase_transform(field, p=0):
+    '''
+    Applies the phase transformation to the field.
+
+    Parameters:
+    - field: A complex field.
+    - p: An integer representing the phase factor.
+
+    Returns:
+    - transformed_field: The phase-transformed field.
+    '''
+    return np.abs(field) * np.exp(1.j * p * np.angle(field))
 
 
-def WPH_moments(field_1,field_2,p1,p2):
-    f1 = phase_transform(field_1,p=p1)
-    f2 = phase_transform(field_2,p=p2)
-    # compute correlaiton:
-    return np.mean(f1*np.conjugate(f2))-np.mean(f1)*np.mean(np.conjugate(f2))
+def WPH_moments(field_1, field_2, p1, p2):
+    '''
+    Computes the WPH moments between two fields.
+
+    Parameters:
+    - field_1: The first complex field.
+    - field_2: The second complex field.
+    - p1: An integer representing the phase factor for field_1.
+    - p2: An integer representing the phase factor for field_2.
+
+    Returns:
+    - moments: The computed WPH moments.
+    '''
+    f1 = phase_transform(field_1, p=p1)
+    f2 = phase_transform(field_2, p=p2)
+    # Compute correlation:
+    return np.mean(f1 * np.conjugate(f2)) - np.mean(f1) * np.mean(np.conjugate(f2))
+Please note that the fi
 
 
-
-
-
+'''
+following code is experimental and shouldn't be used.
+'''
 
 
 import math
