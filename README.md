@@ -1,8 +1,7 @@
 # Moments_analysis
 
-This repo contains the code to replicate the results in https://arxiv.org/pdf/1911.05568.pdf
-I am working on the documentation but it might take a while.
-
+This repository is a comprehensive toolkit for performing an end-to-end cosmological analysis using moments of weak lensing mass maps. It provides functionalities to compute theoretical predictions, measure second and third moments, and perform a complete mcmc analysis of weak lensing mass maps moments.
+This repository contains the code to replicate the results in https://arxiv.org/pdf/1911.05568.pdf
 
 # Installation.
 
