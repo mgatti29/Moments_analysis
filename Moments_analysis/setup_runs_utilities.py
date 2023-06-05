@@ -9,47 +9,52 @@ import cosmolopy
 from .compute_theory import *
 import copy
 
-def covariance_jck(vec,jk_r,type_cov):
+def covariance_jck(vec, jk_r, type_cov):
+    """
+    Estimate covariance matrix using jackknife or bootstrap method.
 
-  #  Covariance estimation
-    len_w = len(vec[:,0])
-    jck = len(vec[0,:])
-    
+    Args:
+        vec (array): Input data matrix.
+        jk_r (int): Number of jackknife regions or bootstrap samples.
+        type_cov (str): Type of covariance estimation. Can be 'jackknife' or 'bootstrap'.
+
+    Returns:
+        dict: Dictionary containing covariance matrix ('cov'), error vector ('err'), correlation matrix ('corr'), and mean vector ('mean').
+    """
+    len_w = len(vec[:, 0])
+    jck = len(vec[0, :])
+
     err = np.zeros(len_w)
     mean = np.zeros(len_w)
-    cov = np.zeros((len_w,len_w))
-    corr = np.zeros((len_w,len_w))
-    
+    cov = np.zeros((len_w, len_w))
+    corr = np.zeros((len_w, len_w))
+
     mean = np.zeros(len_w)
     for i in range(jk_r):
-        mean += vec[:,i]
-    mean = mean/jk_r
-    
-    if type_cov=='jackknife':
-        fact=(jk_r-1.)/(jk_r)
+        mean += vec[:, i]
+    mean = mean / jk_r
 
-    elif type_cov=='bootstrap':
-        fact=1./(jk_r-1)
-    
+    if type_cov == 'jackknife':
+        fact = (jk_r - 1.) / (jk_r)
+    elif type_cov == 'bootstrap':
+        fact = 1. / (jk_r - 1)
+
     for i in range(len_w):
         for j in range(len_w):
             for k in range(jck):
-                cov[i,j] += (vec[i,k]- mean[i])*(vec[j,k]- mean[j])*fact
+                cov[i, j] += (vec[i, k] - mean[i]) * (vec[j, k] - mean[j]) * fact
 
     for ii in range(len_w):
-        err[ii]=np.sqrt(cov[ii,ii])
+        err[ii] = np.sqrt(cov[ii, ii])
 
-  #compute correlation
     for i in range(len_w):
         for j in range(len_w):
-            corr[i,j]=cov[i,j]/(np.sqrt(cov[i,i]*cov[j,j]))
+            corr[i, j] = cov[i, j] / (np.sqrt(cov[i, i] * cov[j, j]))
 
-
-    return {'cov' : cov,
-          'err' : err,
-          'corr':corr,
-          'mean':mean}
-
+    return {'cov': cov,
+            'err': err,
+            'corr': corr,
+            'mean': mean}
 
 
 def data_compression(redshift_config,bins,scales,dc_dict,emu_config,inv_cov):
@@ -145,11 +150,25 @@ def data_compression(redshift_config,bins,scales,dc_dict,emu_config,inv_cov):
 
 def setup_runs(moments_conf,mcmc_config,priors,scales,bins_dictionary,config,cov_config,emu_config,redshift_config,dc_dict = {"flag":False},hartlap={"Hartlap":True,"DS":True,"Sellentin":False}, alternative_cov = {'doit':False,'cov':None}):
         """
-        dc_dict contains the info for the compression
-        ph the scales for the cut
-        hartlap specifies which corrections to the covariance one wants to include
+        Set up  for mcmc runs.
+
+        Args:
+            moments_conf (dict): Dictionary to store the configuration for moments analysis.
+            mcmc_config (dict): Configuration for MCMC.
+            priors (dict): Prior information.
+            scales (dict): Scales information.
+            bins_dictionary (dict): Dictionary containing bin information.
+            config (dict): General configuration information.
+            cov_config (dict): Covariance configuration information.
+            emu_config (dict): Emulator configuration information.
+            redshift_config (dict): Redshift configuration information.
+            dc_dict (dict, optional): Dictionary containing compression information. Defaults to {"flag": False}.
+            hartlap (dict, optional): Hartlap correction information. Defaults to {"Hartlap": True, "DS": True, "Sellentin": False}.
+            alternative_cov (dict, optional): Alternative covariance information. Defaults to {'doit': False, 'cov': None}.
+
+        Returns:
+            dict: Updated moments_conf dictionary.
         """
-    
         for cov_c in config['covariances']:
             for ii,tomo_c in enumerate(config['bins']):
                 tomo_combo_l = tomo_c.replace("+",'_').replace(" ",'')
@@ -279,7 +298,22 @@ def setup_runs(moments_conf,mcmc_config,priors,scales,bins_dictionary,config,cov
  
 
 def make_vector(bins_dict,bins,vectorss,scales,physical_scale_cut=None,Nz_mean=None):
+        """
+        Create a vector from the provided data.
+
+        Args:
+            bins_dict (dict): Dictionary containing bin information.
+            bins (list): List of bins.
+            vectorss (dict): Data vector.
+            scales (array): Array of scales.
+            physical_scale_cut (float, optional): Physical scale cut. Defaults to None.
+            Nz_mean (array, optional): Mean redshift values. Defaults to None.
+
+        Returns:
+            array: Vector created from the data.
+        """
     
+        # cosmology
         cosmo_scale = {'omega_M_0':0.28 , 
                      'omega_lambda_0':1 - 0.28 ,
                      'omega_k_0': 0.0, 
@@ -450,6 +484,22 @@ def make_covariance(mapp, num_real, scales, bins_dictionary):
 
 
 def make_theo_plot(theo,bins_dict,scales,bins,physical_scale_cut=None,Nz_mean=None):
+    """
+    Create a  plot based on the provided data.
+
+    Args:
+        theo (array): Theoretical data.
+        bins_dict (dict): Dictionary containing bin information.
+        scales (dict): Dictionary of scales.
+        bins (list): List of bins.
+        physical_scale_cut (array, optional): Physical scale cut. Defaults to None.
+        Nz_mean (array, optional): Mean redshift values. Defaults to None.
+
+    Returns:
+        dict: Dictionary containing the theoretical plot.
+    """
+    
+    #setup cosmology
     cosmo_scale = {'omega_M_0':0.28 , 
                      'omega_lambda_0':1 - 0.28 ,
                      'omega_k_0': 0.0, 
