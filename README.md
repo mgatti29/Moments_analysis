@@ -31,3 +31,6 @@ git checkout develop
 git checkout des-y3
 - cosmosis-des-library:
 git checkout develop
+
+# Contributing
+Contributions to this project are welcome! If you encounter any issues, have ideas for improvements, or would like to add new features, please submit a pull request or open an issue on the GitHub repository.
