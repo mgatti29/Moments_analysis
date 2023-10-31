@@ -1146,7 +1146,53 @@ class moments_map(object):
         pool.join()
                     
                         
-                    
+        
+    def compute_peaks(self,field_label):
+        try:
+            self.peaks
+        except:
+            self.peaks = dict()
+        try:
+            self.peaks_x
+        except:
+            self.peaks_x = dict()   
+        if not os.path.exists(self.conf['neighbour_pixels'] +'.npy'):
+            neighbour_array = np.empty((hp.nside2npix(self.conf['nside']), 8), dtype=int)
+            for i in range(hp.nside2npix(self.conf['nside'])): 
+                neighbour_array[i] = hp.get_all_neighbours(self.conf['nside'],i)
+            np.save(self.conf['neighbour_pixels'] ,neighbour_array)
+        else:
+            neighbour_array = np.load(self.conf['neighbour_pixels']+'.npy' ,allow_pickle=True)
+            
+
+        peaks_dict = dict()  
+        peaks_dict_x = dict()  
+        for t in self.smoothed_maps[field_label]:
+            peaks_dict[t] = dict()
+            peaks_dict_x[t] = dict()
+            for sc in self.smoothed_maps[field_label][t]:
+
+
+                try:
+                    m = pf.open(self.smoothed_maps[field_label][t][sc])
+                    field_ = m[1].data['map']  
+                except:
+                    field_ = self.smoothed_maps[field_label][t][sc]
+
+                
+                peak_loc = []
+                
+                for i in np.arange(hp.nside2npix(self.conf['nside']))[np.array(self.mask)]: 
+                    if field_[i] > np.max(field_[neighbour_array[i]]):
+                        peak_loc.append(i)
+
+
+                counts,_ = np.histogram(field_[peak_loc],bins =self.conf['kappa_bin'][sc][t])
+                peaks_dict_x[t][sc] = self.conf['kappa_bin'][sc][t]
+                peaks_dict[t][sc] = counts
+        self.peaks[field_label] = peaks_dict
+        self.peaks_x[field_label] = peaks_dict_x 
+        
 
     def compute_phwmoments_sphere(self,label = '',field1 = 'kE',field2 = 'kE',tomo_bins=[0,1,2,3]):
         '''
